@@ -30,7 +30,6 @@
 #include "minecraft/MinecraftProfile.h"
 #include "minecraft/OneSixLibrary.h"
 #include "minecraft/OneSixInstance.h"
-#include "forge/ForgeMirrors.h"
 #include "net/URLConstants.h"
 #include "minecraft/AssetsUtils.h"
 #include "MMCZip.h"
@@ -212,7 +211,6 @@ void OneSixUpdate::jarlibStart()
 	libs.append(version->getActiveNormalLibs());
 
 	auto metacache = ENV.metacache();
-	QList<ForgeXzDownloadPtr> ForgeLibs;
 	QList<std::shared_ptr<OneSixLibrary>> brokenLocalLibs;
 
 	for (auto lib : libs)
@@ -232,14 +230,7 @@ void OneSixUpdate::jarlibStart()
 			auto entry = metacache->resolveEntry("libraries", storage);
 			if (entry->stale)
 			{
-				if (lib->hint() == "forge-pack-xz")
-				{
-					ForgeLibs.append(ForgeXzDownload::make(storage, entry));
-				}
-				else
-				{
-					jarlibDownloadJob->addNetAction(CacheDownload::make(dl, entry));
-				}
+				jarlibDownloadJob->addNetAction(CacheDownload::make(dl, entry));
 			}
 		};
 		if (raw_storage.contains("${arch}"))
@@ -270,13 +261,6 @@ void OneSixUpdate::jarlibStart()
 					  "an externally tracked instance, make sure to run it at least once "
 					  "outside of MultiMC.").arg(failed_all));
 		return;
-	}
-	// TODO: think about how to propagate this from the original json file... or IF AT ALL
-	QString forgeMirrorList = "http://files.minecraftforge.net/mirror-brand.list";
-	if (!ForgeLibs.empty())
-	{
-		jarlibDownloadJob->addNetAction(
-			ForgeMirrors::make(ForgeLibs, jarlibDownloadJob, forgeMirrorList));
 	}
 
 	connect(jarlibDownloadJob.get(), SIGNAL(succeeded()), SLOT(jarlibFinished()));

@@ -4,10 +4,10 @@
 #include "minecraft/MinecraftProfile.h"
 #include "minecraft/OneSixLibrary.h"
 #include "tasks/SequentialTask.h"
-#include "forge/ForgeInstaller.h"
-#include "forge/ForgeVersionList.h"
 #include <settings/INISettingsObject.h>
 #include "pathutils.h"
+#include <QJsonDocument>
+#include <QJsonArray>
 
 OneSixFTBInstance::OneSixFTBInstance(SettingsObjectPtr globalSettings, SettingsObjectPtr settings, const QString &rootDir) :
 	OneSixInstance(globalSettings, settings, rootDir)
