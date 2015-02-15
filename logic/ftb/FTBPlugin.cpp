@@ -1,11 +1,9 @@
 #include "FTBPlugin.h"
-#include "FTBVersion.h"
 #include "LegacyFTBInstance.h"
 #include "OneSixFTBInstance.h"
 #include <BaseInstance.h>
 #include <icons/IconList.h>
 #include <InstanceList.h>
-#include <minecraft/MinecraftVersionList.h>
 #include <settings/INISettingsObject.h>
 #include <pathutils.h>
 #include "QDebug"
@@ -140,53 +138,36 @@ InstancePtr loadInstance(SettingsObjectPtr globalSettings, const QString &instDi
 
 	QString inst_type = m_settings->get("InstanceType").toString();
 
-	if (inst_type == "LegacyFTB")
-	{
-		inst.reset(new LegacyFTBInstance(globalSettings, m_settings, instDir));
-	}
-	else if (inst_type == "OneSixFTB")
+	if (inst_type == "LegacyFTB" || inst_type == "OneSixFTB")
 	{
 		inst.reset(new OneSixFTBInstance(globalSettings, m_settings, instDir));
 	}
-	inst->init();
+	if(inst)
+	{
+		inst->init();
+	}
 	return inst;
 }
 
-InstancePtr createInstance(SettingsObjectPtr globalSettings, MinecraftVersionPtr version, const QString &instDir)
+InstancePtr createInstance(SettingsObjectPtr globalSettings, QString mcVersion, const QString &instDir)
 {
 	QDir rootDir(instDir);
 
 	InstancePtr inst;
 
-	if (!version)
-	{
-		qCritical() << "Can't create instance for non-existing MC version";
-		return nullptr;
-	}
-
 	qDebug() << instDir.toUtf8();
 	if (!rootDir.exists() && !rootDir.mkpath("."))
 	{
 		qCritical() << "Can't create instance folder" << instDir;
-		return nullptr;
+		return inst;
 	}
 
 	auto m_settings = std::make_shared<INISettingsObject>(PathCombine(instDir, "instance.cfg"));
 	m_settings->registerSetting("InstanceType", "Legacy");
-
-	if (version->usesLegacyLauncher())
-	{
-		m_settings->set("InstanceType", "LegacyFTB");
-		inst.reset(new LegacyFTBInstance(globalSettings, m_settings, instDir));
-		inst->setIntendedVersionId(version->descriptor());
-	}
-	else
-	{
-		m_settings->set("InstanceType", "OneSixFTB");
-		inst.reset(new OneSixFTBInstance(globalSettings, m_settings, instDir));
-		inst->setIntendedVersionId(version->descriptor());
-		inst->init();
-	}
+	m_settings->set("InstanceType", "OneSixFTB");
+	inst.reset(new OneSixFTBInstance(globalSettings, m_settings, instDir));
+	inst->setIntendedVersionId(mcVersion);
+	inst->init();
 	return inst;
 }
 
@@ -217,16 +198,7 @@ void FTBPlugin::loadInstances(SettingsObjectPtr globalSettings, QMap<QString, QS
 		if (!QFileInfo(PathCombine(record.instanceDir, "instance.cfg")).exists())
 		{
 			qDebug() << "Converting " << record.name << " as new.";
-			auto mcVersion = std::dynamic_pointer_cast<MinecraftVersion>(ENV.getVersion("net.minecraft", record.mcVersion));
-			if (!mcVersion)
-			{
-				qCritical() << "Can't load instance " << record.instanceDir
-							<< " because minecraft version " << record.mcVersion
-							<< " can't be resolved.";
-				continue;
-			}
-
-			auto instPtr = createInstance(globalSettings, mcVersion, record.instanceDir);
+			auto instPtr = createInstance(globalSettings, record.mcVersion, record.instanceDir);
 			if (!instPtr)
 			{
 				continue;

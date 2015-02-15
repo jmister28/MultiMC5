@@ -17,7 +17,7 @@
 #include "auth/MojangAccountList.h"
 #include "icons/IconList.h"
 #include "minecraft/LwjglVersionList.h"
-#include "minecraft/MinecraftVersionList.h"
+#include "CachedVersionList.h"
 
 #include "net/HttpMetaCache.h"
 #include "net/URLConstants.h"
@@ -221,6 +221,9 @@ MultiMC::MultiMC(int &argc, char **argv, bool test_mode) : QApplication(argc, ar
 	// init the http meta cache
 	ENV.initHttpMetaCache(rootPath, staticDataPath);
 
+	// and the common version lists...
+	initVersionLists();
+
 	// create the global network manager
 	ENV.m_qnam.reset(new QNetworkAccessManager(this));
 
@@ -307,6 +310,13 @@ void MultiMC::initTranslations()
 		m_mmc_translator.reset();
 	}
 }
+
+void MultiMC::initVersionLists()
+{
+	ENV.registerVersionList("net.minecraft", std::make_shared<CachedVersionList>(BuildConfig.WONKO_URL ,"net.minecraft"));
+	ENV.registerVersionList("org.lwjgl", std::make_shared<CachedVersionList>(BuildConfig.WONKO_URL ,"org.lwjgl"));
+}
+
 
 void MultiMC::initIcons()
 {
@@ -485,16 +495,6 @@ std::shared_ptr<LWJGLVersionList> MultiMC::lwjgllist()
 		ENV.registerVersionList("org.lwjgl.legacy", m_lwjgllist);
 	}
 	return m_lwjgllist;
-}
-
-std::shared_ptr<MinecraftVersionList> MultiMC::minecraftlist()
-{
-	if (!m_minecraftlist)
-	{
-		m_minecraftlist.reset(new MinecraftVersionList());
-		ENV.registerVersionList("net.minecraft", m_minecraftlist);
-	}
-	return m_minecraftlist;
 }
 
 std::shared_ptr<JavaVersionList> MultiMC::javalist()
