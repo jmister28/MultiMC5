@@ -43,7 +43,7 @@ public:
 
 	//////  Mod Lists  //////
 	std::shared_ptr<ModList> jarModList() const ;
-	virtual QList< Mod > getJarMods() const override;
+	QList< Mod > getJarMods() const;
 	std::shared_ptr<ModList> coreModList() const;
 	std::shared_ptr<ModList> loaderModList() const;
 	std::shared_ptr<ModList> texturePackList() const override;
@@ -88,7 +88,7 @@ public:
 	bool shouldRebuild() const;
 	void setShouldRebuild(bool val);
 
-	virtual QString currentVersionId() const override;
+	QString currentVersionId() const;
 
 	//! The version of LWJGL that this instance uses.
 	QString lwjglVersion() const;
@@ -99,16 +99,16 @@ public:
 	/// st the version of LWJGL libs this instance will use
 	void setLWJGLVersion(QString val);
 
-	virtual QString intendedVersionId() const override;
-	virtual bool setIntendedVersionId(QString version) override;
+	QString intendedVersionId() const;
+	bool setIntendedVersionId(QString version);
 
 	virtual QSet<QString> traits()
 	{
 		return {"legacy-instance", "texturepacks"};
 	};
 
-	virtual bool shouldUpdate() const override;
-	virtual void setShouldUpdate(bool val) override;
+	bool shouldUpdate() const;
+	void setShouldUpdate(bool val);
 	virtual std::shared_ptr<Task> doUpdate() override;
 
 	virtual BaseProcess *prepareForLaunch(AuthSessionPtr account) override;

@@ -1,5 +1,4 @@
 #include "FTBPlugin.h"
-#include "LegacyFTBInstance.h"
 #include "OneSixFTBInstance.h"
 #include <BaseInstance.h>
 #include <icons/IconList.h>
@@ -128,32 +127,23 @@ QSet<FTBRecord> discoverFTBInstances(SettingsObjectPtr globalSettings)
 	return records;
 }
 
-InstancePtr loadInstance(SettingsObjectPtr globalSettings, const QString &instDir)
+std::shared_ptr<OneSixFTBInstance> loadInstance(SettingsObjectPtr globalSettings, const QString &instDir)
 {
 	auto m_settings = std::make_shared<INISettingsObject>(PathCombine(instDir, "instance.cfg"));
-
-	InstancePtr inst;
-
 	m_settings->registerSetting("InstanceType", "Legacy");
-
 	QString inst_type = m_settings->get("InstanceType").toString();
-
-	if (inst_type == "LegacyFTB" || inst_type == "OneSixFTB")
+	if (inst_type != "LegacyFTB" && inst_type != "OneSixFTB")
 	{
-		inst.reset(new OneSixFTBInstance(globalSettings, m_settings, instDir));
+		return nullptr;
 	}
-	if(inst)
-	{
-		inst->init();
-	}
-	return inst;
+	return std::make_shared<OneSixFTBInstance>(globalSettings, m_settings, instDir);
 }
 
-InstancePtr createInstance(SettingsObjectPtr globalSettings, QString mcVersion, const QString &instDir)
+std::shared_ptr<OneSixFTBInstance> createInstance(SettingsObjectPtr globalSettings, QString mcVersion, const QString &instDir)
 {
 	QDir rootDir(instDir);
 
-	InstancePtr inst;
+	std::shared_ptr<OneSixFTBInstance> inst;
 
 	qDebug() << instDir.toUtf8();
 	if (!rootDir.exists() && !rootDir.mkpath("."))
@@ -166,7 +156,7 @@ InstancePtr createInstance(SettingsObjectPtr globalSettings, QString mcVersion, 
 	m_settings->registerSetting("InstanceType", "Legacy");
 	m_settings->set("InstanceType", "OneSixFTB");
 	inst.reset(new OneSixFTBInstance(globalSettings, m_settings, instDir));
-	inst->setIntendedVersionId(mcVersion);
+	inst->setMinecraftVersion(mcVersion);
 	inst->init();
 	return inst;
 }
@@ -207,7 +197,7 @@ void FTBPlugin::loadInstances(SettingsObjectPtr globalSettings, QMap<QString, QS
 			instPtr->setGroupInitial("FTB");
 			instPtr->setName(record.name);
 			instPtr->setIconKey(iconKey);
-			instPtr->setIntendedVersionId(record.mcVersion);
+			instPtr->setMinecraftVersion(record.mcVersion);
 			instPtr->setNotes(record.description);
 			if (!InstanceList::continueProcessInstance(instPtr, InstanceList::NoCreateError, record.instanceDir, groupMap))
 				continue;
@@ -224,10 +214,7 @@ void FTBPlugin::loadInstances(SettingsObjectPtr globalSettings, QMap<QString, QS
 			instPtr->setGroupInitial("FTB");
 			instPtr->setName(record.name);
 			instPtr->setIconKey(iconKey);
-			if (instPtr->intendedVersionId() != record.mcVersion)
-			{
-				instPtr->setIntendedVersionId(record.mcVersion);
-			}
+			instPtr->setMinecraftVersion(record.mcVersion);
 			instPtr->setNotes(record.description);
 			if (!InstanceList::continueProcessInstance(instPtr, InstanceList::NoCreateError, record.instanceDir, groupMap))
 				continue;

@@ -14,7 +14,7 @@ FTBProfileStrategy::FTBProfileStrategy(OneSixFTBInstance* instance) : OneSixProf
 
 void FTBProfileStrategy::loadDefaultBuiltinPatches()
 {
-	auto mcVersion = m_instance->intendedVersionId();
+	auto mcVersion = m_instance->minecraftVersion();
 
 	ProfilePatchPtr minecraftPatch;
 	{

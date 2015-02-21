@@ -152,8 +152,6 @@ SET(LOGIC_SOURCES
 	# FTB
 	ftb/OneSixFTBInstance.h
 	ftb/OneSixFTBInstance.cpp
-	ftb/LegacyFTBInstance.h
-	ftb/LegacyFTBInstance.cpp
 	ftb/FTBProfileStrategy.h
 	ftb/FTBProfileStrategy.cpp
 	ftb/FTBPlugin.h

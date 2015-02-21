@@ -44,7 +44,7 @@ void OneSixFTBInstance::copy(const QDir &newDir)
 		// HACK HACK HACK HACK
 		// A workaround for a problem in MultiMC, triggered by a historical problem in FTB,
 		// triggered by Mojang getting their library versions wrong in 1.7.10
-		if(intendedVersionId() == "1.7.10")
+		if(minecraftVersion() == "1.7.10")
 		{
 			auto insert = [&outLibs, &libraryNames](QString name)
 			{
@@ -61,8 +61,8 @@ void OneSixFTBInstance::copy(const QDir &newDir)
 		root.insert("order", 1);
 		root.insert("fileId", QString("org.multimc.ftb.pack.json"));
 		root.insert("name", name());
-		root.insert("mcVersion", intendedVersionId());
-		root.insert("version", intendedVersionId());
+		root.insert("mcVersion", minecraftVersion());
+		root.insert("version", minecraftVersion());
 		ensureFilePathExists(newDir.absoluteFilePath("patches/ftb.json"));
 		QFile out(newDir.absoluteFilePath("patches/ftb.json"));
 		if (!out.open(QFile::WriteOnly | QFile::Truncate))
@@ -115,11 +115,6 @@ QDir OneSixFTBInstance::versionsPath() const
 	return QDir(m_globalSettings->get("FTBRoot").toString() + "/versions");
 }
 
-bool OneSixFTBInstance::providesVersionFile() const
-{
-	return true;
-}
-
 void OneSixFTBInstance::createProfile()
 {
 	m_version.reset(new MinecraftProfile(new FTBProfileStrategy(this)));
@@ -129,9 +124,9 @@ QString OneSixFTBInstance::getStatusbarDescription()
 {
 	if (flags() & VersionBrokenFlag)
 	{
-		return "OneSix FTB: " + intendedVersionId() + " (broken)";
+		return "OneSix FTB: " + minecraftVersion() + " (broken)";
 	}
-	return "OneSix FTB: " + intendedVersionId();
+	return "OneSix FTB: " + minecraftVersion();
 }
 
 std::shared_ptr<Task> OneSixFTBInstance::doUpdate()
