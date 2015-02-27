@@ -1,6 +1,6 @@
 #pragma once
-#include "../minecraft/ProfileStrategy.h"
-#include "../minecraft/OneSixProfileStrategy.h"
+#include "../ProfileStrategy.h"
+#include "../onesix/OneSixProfileStrategy.h"
 
 class OneSixFTBInstance;
 

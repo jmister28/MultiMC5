@@ -22,7 +22,7 @@
 
 #include "LegacyInstance.h"
 
-#include "minecraft/LegacyUpdate.h"
+#include "minecraft/legacy/LegacyUpdate.h"
 #include "icons/IconList.h"
 #include "minecraft/MinecraftProcess.h"
 #include "minecraft/ModList.h"

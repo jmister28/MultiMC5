@@ -24,10 +24,10 @@
 #include "net/URLConstants.h"
 #include "MMCZip.h"
 
-#include "minecraft/LegacyUpdate.h"
-#include "minecraft/LwjglVersionList.h"
+#include "minecraft/legacy/LegacyUpdate.h"
+#include "minecraft/legacy/LwjglVersionList.h"
 #include "minecraft/ModList.h"
-#include "minecraft/LegacyInstance.h"
+#include "minecraft/legacy/LegacyInstance.h"
 
 LegacyUpdate::LegacyUpdate(BaseInstance *inst, QObject *parent) : Task(parent), m_inst(inst)
 {

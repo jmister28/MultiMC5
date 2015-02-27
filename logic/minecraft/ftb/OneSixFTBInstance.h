@@ -1,6 +1,6 @@
 #pragma once
 
-#include "minecraft/OneSixInstance.h"
+#include "minecraft/onesix/OneSixInstance.h"
 
 class OneSixLibrary;
 

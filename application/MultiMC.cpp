@@ -16,7 +16,7 @@
 #include "InstanceList.h"
 #include "auth/MojangAccountList.h"
 #include "icons/IconList.h"
-#include "minecraft/LwjglVersionList.h"
+#include "minecraft/legacy/LwjglVersionList.h"
 #include "CachedVersionList.h"
 
 #include "net/HttpMetaCache.h"
@@ -39,7 +39,7 @@
 
 #include "trans/TranslationDownloader.h"
 
-#include "ftb/FTBPlugin.h"
+#include "minecraft/ftb/FTBPlugin.h"
 
 using namespace Util::Commandline;
 

@@ -94,23 +94,38 @@ SET(LOGIC_SOURCES
 	status/StatusChecker.h
 	status/StatusChecker.cpp
 
-	# Minecraft support
+	# Minecraft - OneSix support
 	minecraft/onesix/OneSixFormat.h
 	minecraft/onesix/OneSixRead.cpp
 	minecraft/onesix/OneSixWrite.cpp
 	minecraft/onesix/OneSixUtils.cpp
+	minecraft/onesix/OneSixProfileStrategy.cpp
+	minecraft/onesix/OneSixProfileStrategy.h
+	minecraft/onesix/OneSixUpdate.h
+	minecraft/onesix/OneSixUpdate.cpp
+	minecraft/onesix/OneSixInstance.h
+	minecraft/onesix/OneSixInstance.cpp
+
+	# Minecraft - Legacy support
+	minecraft/legacy/LegacyInstance.cpp
+	minecraft/legacy/LegacyInstance.h
+	minecraft/legacy/LegacyUpdate.cpp
+	minecraft/legacy/LegacyUpdate.h
+	minecraft/legacy/LwjglVersionList.h
+	minecraft/legacy/LwjglVersionList.cpp
+
+	# FTB
+	minecraft/ftb/OneSixFTBInstance.h
+	minecraft/ftb/OneSixFTBInstance.cpp
+	minecraft/ftb/FTBProfileStrategy.h
+	minecraft/ftb/FTBProfileStrategy.cpp
+	minecraft/ftb/FTBPlugin.h
+	minecraft/ftb/FTBPlugin.cpp
+
+	# Minecraft - Wonko
 	minecraft/wonko/WonkoFormat.h
 	minecraft/wonko/WonkoRead.cpp
-	minecraft/OneSixUpdate.h
-	minecraft/OneSixUpdate.cpp
-	minecraft/OneSixInstance.h
-	minecraft/OneSixInstance.cpp
-	minecraft/LegacyUpdate.h
-	minecraft/LegacyUpdate.cpp
-	minecraft/LegacyInstance.h
-	minecraft/LegacyInstance.cpp
-	minecraft/LwjglVersionList.h
-	minecraft/LwjglVersionList.cpp
+
 	minecraft/SkinUtils.h
 	minecraft/SkinUtils.cpp
 	minecraft/GradleSpecifier.h
@@ -123,11 +138,6 @@ SET(LOGIC_SOURCES
 	minecraft/MinecraftProcess.cpp
 	minecraft/MinecraftProcess.h
 	minecraft/NullProfileStrategy.h
-	minecraft/OneSixLibrary.cpp
-	minecraft/OneSixLibrary.h
-	minecraft/OneSixProfileStrategy.cpp
-	minecraft/OneSixProfileStrategy.h
-	minecraft/OneSixRule.cpp
 	minecraft/OneSixRule.h
 	minecraft/OpSys.cpp
 	minecraft/OpSys.h
@@ -148,14 +158,6 @@ SET(LOGIC_SOURCES
 	minecraft/ModList.cpp
 	minecraft/AssetsUtils.h
 	minecraft/AssetsUtils.cpp
-
-	# FTB
-	ftb/OneSixFTBInstance.h
-	ftb/OneSixFTBInstance.cpp
-	ftb/FTBProfileStrategy.h
-	ftb/FTBProfileStrategy.cpp
-	ftb/FTBPlugin.h
-	ftb/FTBPlugin.cpp
 
 	# A Recursive file system watcher
 	RecursiveFileSystemWatcher.h

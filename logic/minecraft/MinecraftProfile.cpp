@@ -154,9 +154,9 @@ ProfilePatchPtr MinecraftProfile::versionPatch(int index)
 	return VersionPatches[index];
 }
 
-QList<std::shared_ptr<OneSixLibrary> > MinecraftProfile::getActiveNormalLibs()
+QList<RawLibraryPtr> MinecraftProfile::getActiveNormalLibs()
 {
-	QList<std::shared_ptr<OneSixLibrary> > output;
+	QList<RawLibraryPtr> output;
 	for (auto lib : libraries)
 	{
 		if (lib->isActive() && !lib->isNative())
@@ -175,9 +175,9 @@ QList<std::shared_ptr<OneSixLibrary> > MinecraftProfile::getActiveNormalLibs()
 	return output;
 }
 
-QList<std::shared_ptr<OneSixLibrary> > MinecraftProfile::getActiveNativeLibs()
+QList<RawLibraryPtr> MinecraftProfile::getActiveNativeLibs()
 {
-	QList<std::shared_ptr<OneSixLibrary> > output;
+	QList<RawLibraryPtr> output;
 	for (auto lib : libraries)
 	{
 		if (lib->isActive() && lib->isNative())

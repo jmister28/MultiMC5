@@ -361,7 +361,7 @@ namespace Ui {
 #include "pagedialog/PageDialog.h"
 
 #include "InstanceList.h"
-#include "minecraft/LwjglVersionList.h"
+#include "minecraft/legacy/LwjglVersionList.h"
 #include "icons/IconList.h"
 #include "java/JavaVersionList.h"
 

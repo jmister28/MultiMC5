@@ -1,6 +1,6 @@
-#include "ftb/FTBProfileStrategy.h"
+#include "minecraft/ftb/FTBProfileStrategy.h"
 #include "minecraft/VersionBuildError.h"
-#include "ftb/OneSixFTBInstance.h"
+#include "minecraft/ftb/OneSixFTBInstance.h"
 
 #include <pathutils.h>
 #include <QDir>
