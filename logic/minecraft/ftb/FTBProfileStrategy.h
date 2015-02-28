@@ -10,7 +10,6 @@ public:
 	FTBProfileStrategy(OneSixFTBInstance * instance);
 	virtual ~FTBProfileStrategy() {};
 	virtual void load() override;
-	virtual bool resetOrder() override;
 	virtual bool saveOrder(ProfileUtils::PatchOrder order) override;
 	virtual bool installJarMods(QStringList filepaths) override;
 	virtual bool removePatch(ProfilePatchPtr patch) override;

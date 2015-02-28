@@ -164,11 +164,6 @@ bool FTBProfileStrategy::saveOrder(ProfileUtils::PatchOrder order)
 	return false;
 }
 
-bool FTBProfileStrategy::resetOrder()
-{
-	return false;
-}
-
 bool FTBProfileStrategy::removePatch(ProfilePatchPtr patch)
 {
 	return false;
