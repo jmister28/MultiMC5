@@ -51,7 +51,8 @@ void FTBProfileStrategy::loadDefaultBuiltinPatches()
 			file->addLibs = file->overwriteLibs;
 			file->overwriteLibs.clear();
 			file->shouldOverwriteLibs = false;
-			file->id.clear();
+			// FIXME: possibly broken, needs testing
+			// file->id.clear();
 			for(auto addLib: file->addLibs)
 			{
 				addLib->m_hint = "local";
