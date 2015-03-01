@@ -219,7 +219,6 @@ bool OneSixProfileStrategy::removePatch(ProfilePatchPtr patch)
 		}
 	}
 
-
 	auto preRemoveJarMod = [&](JarmodPtr jarMod) -> bool
 	{
 		QString fullpath = PathCombine(m_instance->jarModsDir(), jarMod->name);
