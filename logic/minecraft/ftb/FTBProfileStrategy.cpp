@@ -134,13 +134,13 @@ void FTBProfileStrategy::loadUserPatches()
 		// do not load what we already loaded in the first pass
 		if (userOrder.contains(file->fileId))
 			continue;
-		if (files.contains(file->order))
+		if (files.contains(file->getOrder()))
 		{
 			// FIXME: do not throw?
 			throw VersionBuildError(QObject::tr("%1 has the same order as %2")
-										.arg(file->fileId, files[file->order].second->fileId));
+										.arg(file->fileId, files[file->getOrder()].second->fileId));
 		}
-		files.insert(file->order, qMakePair(info.fileName(), file));
+		files.insert(file->getOrder(), qMakePair(info.fileName(), file));
 	}
 	for (auto order : files.keys())
 	{
