@@ -16,53 +16,53 @@ void FTBProfileStrategy::loadDefaultBuiltinPatches()
 {
 	auto mcVersion = m_instance->minecraftVersion();
 
-	ProfilePatchPtr minecraftPatch;
 	{
+		VersionFilePtr minecraftPatch;
 		auto mcJson = m_instance->versionsPath().absoluteFilePath(mcVersion + "/" + mcVersion + ".json");
 		// load up the base minecraft patch
 		if(QFile::exists(mcJson))
 		{
-			auto file = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
-			file->fileId = "net.minecraft";
-			file->name = QObject::tr("Minecraft (tracked)");
-			if(file->version.isEmpty())
+			minecraftPatch = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
+			minecraftPatch->fileId = "net.minecraft";
+			minecraftPatch->name = QObject::tr("Minecraft (tracked)");
+			if(minecraftPatch->version.isEmpty())
 			{
-				file->version = mcVersion;
+				minecraftPatch->version = mcVersion;
 			}
-			minecraftPatch = std::dynamic_pointer_cast<ProfilePatch>(file);
 		}
 		else
 		{
 			throw VersionIncomplete("net.minecraft");
 		}
 		minecraftPatch->setOrder(-2);
+		profile->appendPatch(minecraftPatch);
 	}
-	profile->appendPatch(minecraftPatch);
 
-	ProfilePatchPtr packPatch;
+
 	{
+		VersionFilePtr minecraftPatch;
 		auto mcJson = m_instance->minecraftRoot() + "/pack.json";
 		// load up the base minecraft patch
 		if(QFile::exists(mcJson))
 		{
-			auto file = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
+			auto minecraftPatch = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
 
 			// adapt the loaded file - the FTB patch file format is different than ours.
-			file->addLibs = file->overwriteLibs;
-			file->overwriteLibs.clear();
-			file->shouldOverwriteLibs = false;
+			minecraftPatch->resources.addLibs = minecraftPatch->resources.overwriteLibs;
+			minecraftPatch->resources.overwriteLibs.clear();
+			minecraftPatch->resources.shouldOverwriteLibs = false;
 			// FIXME: possibly broken, needs testing
 			// file->id.clear();
-			for(auto addLib: file->addLibs)
+			for(auto addLib: minecraftPatch->resources.addLibs)
 			{
 				addLib->m_hint = "local";
 				addLib->insertType = RawLibrary::Prepend;
 			}
-			file->fileId = "org.multimc.ftb.pack";
-			file->name = QObject::tr("%1 (FTB pack)").arg(m_instance->name());
-			if(file->version.isEmpty())
+			minecraftPatch->fileId = "org.multimc.ftb.pack";
+			minecraftPatch->name = QObject::tr("%1 (FTB pack)").arg(m_instance->name());
+			if(minecraftPatch->version.isEmpty())
 			{
-				file->version = QObject::tr("Unknown");
+				minecraftPatch->version = QObject::tr("Unknown");
 				QFile versionFile (PathCombine(m_instance->instanceRoot(), "version"));
 				if(versionFile.exists())
 				{
@@ -70,20 +70,18 @@ void FTBProfileStrategy::loadDefaultBuiltinPatches()
 					{
 						// FIXME: just guessing the encoding/charset here.
 						auto version = QString::fromUtf8(versionFile.readAll());
-						file->version = version;
+						minecraftPatch->version = version;
 					}
 				}
 			}
-			minecraftPatch = std::dynamic_pointer_cast<ProfilePatch>(file);
 		}
 		else
 		{
 			throw VersionIncomplete("org.multimc.ftb.pack");
 		}
 		minecraftPatch->setOrder(1);
+		profile->appendPatch(minecraftPatch);
 	}
-	profile->appendPatch(minecraftPatch);
-
 }
 
 void FTBProfileStrategy::loadUserPatches()
@@ -165,7 +163,7 @@ bool FTBProfileStrategy::saveOrder(ProfileUtils::PatchOrder order)
 	return false;
 }
 
-bool FTBProfileStrategy::removePatch(ProfilePatchPtr patch)
+bool FTBProfileStrategy::removePatch(VersionFilePtr patch)
 {
 	return false;
 }
@@ -174,4 +172,3 @@ bool FTBProfileStrategy::installJarMods(QStringList filepaths)
 {
 	return false;
 }
-
