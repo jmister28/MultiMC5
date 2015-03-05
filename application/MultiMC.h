@@ -9,7 +9,7 @@
 
 class QFile;
 class LWJGLVersionList;
-class CachedVersionList;
+class MetaPackageList;
 class HttpMetaCache;
 class SettingsObject;
 class InstanceList;

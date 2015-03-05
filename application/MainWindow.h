@@ -30,7 +30,7 @@ class QToolButton;
 class InstanceProxyModel;
 class LabeledToolButton;
 class QLabel;
-class MinecraftProcess;
+class Process;
 class ConsoleWindow;
 class BaseProfilerFactory;
 class GenericPageProvider;
@@ -195,7 +195,7 @@ private:
 	class GroupView *view;
 	InstanceProxyModel *proxymodel;
     NetJobPtr skin_download_job;
-	MinecraftProcess *proc;
+	Process *proc;
 	ConsoleWindow *console;
 	LabeledToolButton *renameButton;
 	QToolButton *changeIconButton;

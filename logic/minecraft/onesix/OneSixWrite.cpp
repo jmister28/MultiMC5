@@ -1,5 +1,5 @@
 #include "OneSixFormat.h"
-#include "minecraft/VersionFile.h"
+#include "minecraft/Package.h"
 #include "MMCJson.h"
 #include "ParseUtils.h"
 #include <QJsonArray>
@@ -26,7 +26,7 @@ QJsonObject OneSixFormat::toJson(std::shared_ptr<OsRule> rule)
 	return ruleObj;
 }
 
-QJsonObject OneSixFormat::toJson(RawLibraryPtr raw)
+QJsonObject OneSixFormat::toJson(LibraryPtr raw)
 {
 	QJsonObject libRoot;
 	libRoot.insert("name", (QString)raw->m_name);
@@ -90,7 +90,7 @@ QJsonObject OneSixFormat::toJson(RawLibraryPtr raw)
 	return libRoot;
 }
 
-QJsonDocument OneSixFormat::toJson(VersionFilePtr file, bool saveOrder)
+QJsonDocument OneSixFormat::toJson(PackagePtr file, bool saveOrder)
 {
 	QJsonObject root;
 	if (saveOrder)
@@ -112,7 +112,7 @@ QJsonDocument OneSixFormat::toJson(VersionFilePtr file, bool saveOrder)
 	writeString(root, "+minecraftArguments", resourceData.addMinecraftArguments);
 	writeString(root, "-minecraftArguments", resourceData.removeMinecraftArguments);
 	writeString(root, "type", file->type);
-	writeString(root, "assets", resourceData.assets);
+	writeString(root, "assets", resourceData.assets.id());
 	if (file->fileId == "net.minecraft")
 	{
 		writeString(root, "releaseTime", file->m_releaseTimeString);

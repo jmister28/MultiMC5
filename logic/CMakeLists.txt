@@ -17,8 +17,8 @@ SET(LOGIC_SOURCES
 	MMCError.h
 	MMCZip.h
 	MMCZip.cpp
-	CachedVersionList.cpp
-	CachedVersionList.h
+	MetaPackageList.cpp
+	MetaPackageList.h
 	ParseUtils.cpp
 	ParseUtils.h
 
@@ -126,19 +126,23 @@ SET(LOGIC_SOURCES
 	minecraft/wonko/WonkoFormat.h
 	minecraft/wonko/WonkoRead.cpp
 
+	minecraft/Assets.h
+	minecraft/Assets.cpp
 	minecraft/SkinUtils.h
 	minecraft/SkinUtils.cpp
 	minecraft/GradleSpecifier.h
-	minecraft/MinecraftProfile.cpp
-	minecraft/MinecraftProfile.h
 	minecraft/JarMod.cpp
 	minecraft/JarMod.h
 	minecraft/MinecraftInstance.cpp
 	minecraft/MinecraftInstance.h
-	minecraft/MinecraftProcess.cpp
-	minecraft/MinecraftProcess.h
-	minecraft/MinecraftResources.cpp
-	minecraft/MinecraftResources.h
+	minecraft/Process.cpp
+	minecraft/Process.h
+	minecraft/MinecraftProfile.cpp
+	minecraft/MinecraftProfile.h
+	minecraft/Patch.cpp
+	minecraft/Patch.h
+	minecraft/Resources.cpp
+	minecraft/Resources.h
 	minecraft/NullProfileStrategy.h
 	minecraft/OneSixRule.h
 	minecraft/OpSys.cpp
@@ -146,18 +150,16 @@ SET(LOGIC_SOURCES
 	minecraft/ProfileUtils.cpp
 	minecraft/ProfileUtils.h
 	minecraft/ProfileStrategy.h
-	minecraft/RawLibrary.cpp
-	minecraft/RawLibrary.h
+	minecraft/Library.cpp
+	minecraft/Library.h
 	minecraft/VersionBuildError.h
-	minecraft/VersionFile.h
+	minecraft/Package.h
 	minecraft/VersionFilterData.h
 	minecraft/VersionFilterData.cpp
 	minecraft/Mod.h
 	minecraft/Mod.cpp
 	minecraft/ModList.h
 	minecraft/ModList.cpp
-	minecraft/AssetsUtils.h
-	minecraft/AssetsUtils.cpp
 
 	# A Recursive file system watcher
 	RecursiveFileSystemWatcher.h
