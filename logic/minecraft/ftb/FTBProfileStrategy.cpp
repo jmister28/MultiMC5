@@ -17,7 +17,7 @@ void FTBProfileStrategy::loadDefaultBuiltinPatches()
 	auto mcVersion = m_instance->minecraftVersion();
 
 	{
-		VersionFilePtr minecraftPatch;
+		PackagePtr minecraftPatch;
 		auto mcJson = m_instance->versionsPath().absoluteFilePath(mcVersion + "/" + mcVersion + ".json");
 		// load up the base minecraft patch
 		if(QFile::exists(mcJson))
@@ -40,7 +40,7 @@ void FTBProfileStrategy::loadDefaultBuiltinPatches()
 
 
 	{
-		VersionFilePtr minecraftPatch;
+		PackagePtr minecraftPatch;
 		auto mcJson = m_instance->minecraftRoot() + "/pack.json";
 		// load up the base minecraft patch
 		if(QFile::exists(mcJson))
@@ -48,15 +48,15 @@ void FTBProfileStrategy::loadDefaultBuiltinPatches()
 			auto minecraftPatch = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
 
 			// adapt the loaded file - the FTB patch file format is different than ours.
-			minecraftPatch->resources.addLibs = minecraftPatch->resources.overwriteLibs;
-			minecraftPatch->resources.overwriteLibs.clear();
-			minecraftPatch->resources.shouldOverwriteLibs = false;
+			minecraftPatch->resources.libraries.addLibs = minecraftPatch->resources.libraries.overwriteLibs;
+			minecraftPatch->resources.libraries.overwriteLibs.clear();
+			minecraftPatch->resources.libraries.shouldOverwriteLibs = false;
 			// FIXME: possibly broken, needs testing
 			// file->id.clear();
-			for(auto addLib: minecraftPatch->resources.addLibs)
+			for(auto addLib: minecraftPatch->resources.libraries.addLibs)
 			{
 				addLib->m_hint = "local";
-				addLib->insertType = RawLibrary::Prepend;
+				addLib->insertType = Library::Prepend;
 			}
 			minecraftPatch->fileId = "org.multimc.ftb.pack";
 			minecraftPatch->name = QObject::tr("%1 (FTB pack)").arg(m_instance->name());
@@ -118,7 +118,7 @@ void FTBProfileStrategy::loadUserPatches()
 		profile->appendPatch(file);
 	}
 	// now load the rest by internal preference.
-	QMap<int, QPair<QString, VersionFilePtr>> files;
+	QMap<int, QPair<QString, PackagePtr>> files;
 	for (auto info : patches.entryInfoList(QStringList() << "*.json", QDir::Files))
 	{
 		// parse the file
@@ -155,7 +155,7 @@ void FTBProfileStrategy::load()
 	loadDefaultBuiltinPatches();
 	loadUserPatches();
 
-	profile->finalize();
+	profile->resources.finalize();
 }
 
 bool FTBProfileStrategy::saveOrder(ProfileUtils::PatchOrder order)
@@ -163,7 +163,7 @@ bool FTBProfileStrategy::saveOrder(ProfileUtils::PatchOrder order)
 	return false;
 }
 
-bool FTBProfileStrategy::removePatch(VersionFilePtr patch)
+bool FTBProfileStrategy::removePatch(PackagePtr patch)
 {
 	return false;
 }

@@ -2,7 +2,7 @@
 #include "FTBProfileStrategy.h"
 
 #include "minecraft/MinecraftProfile.h"
-#include "minecraft/RawLibrary.h"
+#include "minecraft/Library.h"
 #include "tasks/SequentialTask.h"
 #include <settings/INISettingsObject.h>
 #include "pathutils.h"
@@ -77,7 +77,7 @@ void OneSixFTBInstance::copy(const QDir &newDir)
 		qDebug() << "Copying FTB libraries";
 		for (auto library : libraryNames)
 		{
-			RawLibrary lib;
+			Library lib;
 			lib.setRawName(GradleSpecifier(library));
 			const QString out = QDir::current().absoluteFilePath("libraries/" + lib.storagePath());
 			if (QFile::exists(out))
