@@ -94,7 +94,7 @@ void OneSixProfileStrategy::loadBuiltinPatch(QString uid, QString name, QString 
 		if (!file.open(QFile::ReadOnly))
 		{
 			throw Json::JsonException(QObject::tr("Unable to open the version file %1: %2.")
-										  .arg(file.fileName(), file.errorString()));
+									  .arg(file.fileName(), file.errorString()));
 		}
 		QJsonParseError error;
 		QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
