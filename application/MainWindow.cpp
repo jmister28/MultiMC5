@@ -379,8 +379,8 @@ namespace Ui {
 #include "NagUtils.h"
 #include "InstancePageProvider.h"
 #include "minecraft/SkinUtils.h"
-#include "IconRegistry.h"
 #include "AuthTask.h"
+#include "resources/Resource.h"
 
 #include <updater/UpdateChecker.h>
 #include <notifications/NotificationChecker.h>
@@ -743,7 +743,7 @@ void MainWindow::repopulateAccountsMenu()
 						action->setChecked(true);
 					}
 
-					MMC->iconRegistry()->setForTarget(action, account->avatar());
+					Resource::create(account->avatar())->applyTo(action)->placeholder(Resource::create("icon:hourglass"));
 					accountMenu->addAction(action);
 					connect(action, &QAction::triggered, this, &MainWindow::makeAccountGlobalDefault);
 				}
@@ -772,12 +772,12 @@ void MainWindow::latestAccountChanged()
 	BaseAccount *account = MMC->accountsModel()->latest();
 	if (account)
 	{
-		MMC->iconRegistry()->setForTarget(accountMenuButton, account->avatar());
+		Resource::create(account->avatar())->applyTo(accountMenuButton)->placeholder(Resource::create("icon:hourglass"));
 	}
 	else
 	{
 		// Set the icon to the "no account" icon.
-		MMC->iconRegistry()->setForTarget(accountMenuButton, "noaccount");
+		Resource::create("icon:noaccount")->applyTo(accountMenuButton);
 	}
 }
 
