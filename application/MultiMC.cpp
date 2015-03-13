@@ -17,7 +17,7 @@
 #include "auth/MojangAccountList.h"
 #include "icons/IconList.h"
 #include "minecraft/legacy/LwjglVersionList.h"
-#include "MetaPackageList.h"
+#include "wonko/WonkoVersionList.h"
 
 #include "net/HttpMetaCache.h"
 #include "net/URLConstants.h"
@@ -313,10 +313,10 @@ void MultiMC::initTranslations()
 
 void MultiMC::initVersionLists()
 {
-	ENV.registerVersionList("net.minecraft", std::make_shared<MetaPackageList>(BuildConfig.WONKO_URL ,"net.minecraft"));
-	ENV.registerVersionList("org.lwjgl", std::make_shared<MetaPackageList>(BuildConfig.WONKO_URL ,"org.lwjgl"));
-	ENV.registerVersionList("net.minecraftforge", std::make_shared<MetaPackageList>(BuildConfig.WONKO_URL ,"net.minecraftforge"));
-	ENV.registerVersionList("com.mumfrey.liteloader", std::make_shared<MetaPackageList>(BuildConfig.WONKO_URL ,"com.mumfrey.liteloader"));
+	ENV.registerVersionList("net.minecraft", std::make_shared<WonkoVersionList>(BuildConfig.WONKO_URL ,"net.minecraft"));
+	ENV.registerVersionList("org.lwjgl", std::make_shared<WonkoVersionList>(BuildConfig.WONKO_URL ,"org.lwjgl"));
+	ENV.registerVersionList("net.minecraftforge", std::make_shared<WonkoVersionList>(BuildConfig.WONKO_URL ,"net.minecraftforge"));
+	ENV.registerVersionList("com.mumfrey.liteloader", std::make_shared<WonkoVersionList>(BuildConfig.WONKO_URL ,"com.mumfrey.liteloader"));
 }
 
 

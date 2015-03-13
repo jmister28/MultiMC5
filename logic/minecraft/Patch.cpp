@@ -8,7 +8,6 @@
 #include "minecraft/Library.h"
 #include "minecraft/MinecraftProfile.h"
 #include "minecraft/JarMod.h"
-#include "ParseUtils.h"
 
 #include "MMCJson.h"
 using namespace MMCJson;
@@ -27,7 +26,10 @@ void Patch::applyTo(Minecraft::Resources *version)
 	{
 		version->appletClass = appletClass;
 	}
-	version->assets.apply(assets);
+	if (assets)
+	{
+		assets->applyTo(version->assets);
+	}
 	if (!overwriteMinecraftArguments.isNull())
 	{
 		version->minecraftArguments = overwriteMinecraftArguments;
@@ -54,6 +56,7 @@ void Patch::applyTo(Minecraft::Resources *version)
 	}
 	version->jarMods.append(jarMods);
 	version->traits.unite(traits);
-	version->libraries.apply(libraries);
+	libraries->applyTo(version->libraries);
+	natives->applyTo(version->natives);
 }
 }

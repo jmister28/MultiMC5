@@ -25,7 +25,7 @@ struct Patch
 	QString removeMinecraftArguments;
 
 	// a special resource that hides the minecraft asset resource logic
-	Assets assets;
+	std::shared_ptr<Assets> assets;
 
 	// more game command line params, this time more special
 	bool shouldOverwriteTweakers = false;
@@ -33,7 +33,8 @@ struct Patch
 	QStringList addTweakers;
 	QStringList removeTweakers;
 
-	Libraries libraries;
+	std::shared_ptr<Libraries> libraries = std::make_shared<Libraries>();
+	std::shared_ptr<Libraries> natives = std::make_shared<Libraries>();
 
 	QSet<QString> traits; // tags
 	QList<JarmodPtr> jarMods; // files of type... again.

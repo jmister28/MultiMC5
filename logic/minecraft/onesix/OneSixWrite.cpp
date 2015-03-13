@@ -1,25 +1,25 @@
 #include "OneSixFormat.h"
-#include "minecraft/Package.h"
-#include "MMCJson.h"
-#include "ParseUtils.h"
-#include <QJsonArray>
 
-using namespace MMCJson;
+#include "minecraft/Package.h"
+#include "wonko/Rules.h"
+#include "Json.h"
+
+using namespace Json;
 
 QJsonObject OneSixFormat::toJson(std::shared_ptr<ImplicitRule> rule)
 {
 	QJsonObject ruleObj;
-	ruleObj.insert("action", rule->m_result == Allow ? QString("allow") : QString("disallow"));
+	ruleObj.insert("action", rule->resultToString());
 	return ruleObj;
 }
 
 QJsonObject OneSixFormat::toJson(std::shared_ptr<OsRule> rule)
 {
 	QJsonObject ruleObj;
-	ruleObj.insert("action", rule->m_result == Allow ? QString("allow") : QString("disallow"));
+	ruleObj.insert("action", rule->resultToString());
 	QJsonObject osObj;
 	{
-		osObj.insert("name", OpSys_toString(rule->m_system));
+		osObj.insert("name", rule->m_system.toString());
 		osObj.insert("version", rule->m_version_regexp);
 	}
 	ruleObj.insert("os", osObj);
@@ -30,15 +30,15 @@ QJsonObject OneSixFormat::toJson(LibraryPtr raw)
 {
 	QJsonObject libRoot;
 	libRoot.insert("name", (QString)raw->m_name);
-	if (raw->m_absolute_url.size())
-		libRoot.insert("MMC-absoluteUrl", raw->m_absolute_url);
-	if (raw->m_hint.size())
+	if (!raw->m_absolute_url.isEmpty())
+		libRoot.insert("MMC-absoluteUrl", Json::toJson(raw->m_absolute_url));
+	if (!raw->m_hint.isEmpty())
 		libRoot.insert("MMC-hint", raw->m_hint);
 	if (raw->m_base_url != "http://" + URLConstants::AWS_DOWNLOAD_LIBRARIES &&
 		raw->m_base_url != "https://" + URLConstants::AWS_DOWNLOAD_LIBRARIES &&
 		raw->m_base_url != "https://" + URLConstants::LIBRARY_BASE && !raw->m_base_url.isEmpty())
 	{
-		libRoot.insert("url", raw->m_base_url);
+		libRoot.insert("url", Json::toJson(raw->m_base_url));
 	}
 	if (raw->isNative())
 	{
@@ -46,7 +46,7 @@ QJsonObject OneSixFormat::toJson(LibraryPtr raw)
 		auto iter = raw->m_native_classifiers.begin();
 		while (iter != raw->m_native_classifiers.end())
 		{
-			nativeList.insert(OpSys_toString(iter.key()), iter.value());
+			nativeList.insert(iter.key().toString(), iter.value());
 			iter++;
 		}
 		libRoot.insert("natives", nativeList);
@@ -62,10 +62,10 @@ QJsonObject OneSixFormat::toJson(LibraryPtr raw)
 			libRoot.insert("extract", extract);
 		}
 	}
-	if (raw->m_rules.size())
+	if (raw->m_rules)
 	{
 		QJsonArray allRules;
-		for (auto &rule : raw->m_rules)
+		for (auto &rule : raw->m_rules->rules())
 		{
 			QJsonObject ruleObj;
 			auto implicitRule = std::dynamic_pointer_cast<ImplicitRule>(rule);
@@ -90,6 +90,15 @@ QJsonObject OneSixFormat::toJson(LibraryPtr raw)
 	return libRoot;
 }
 
+static QList<LibraryPtr> toOneSixLibraries(const QList<LibraryPtr> &libraries)
+{
+	QList<LibraryPtr> out;
+	for (const LibraryPtr &ptr : libraries)
+	{
+		out.append(std::dynamic_pointer_cast<Library>(ptr));
+	}
+	return out;
+}
 QJsonDocument OneSixFormat::toJson(PackagePtr file, bool saveOrder)
 {
 	QJsonObject root;
@@ -112,7 +121,7 @@ QJsonDocument OneSixFormat::toJson(PackagePtr file, bool saveOrder)
 	writeString(root, "+minecraftArguments", resourceData.addMinecraftArguments);
 	writeString(root, "-minecraftArguments", resourceData.removeMinecraftArguments);
 	writeString(root, "type", file->type);
-	writeString(root, "assets", resourceData.assets.id());
+	writeString(root, "assets", resourceData.assets->id());
 	if (file->fileId == "net.minecraft")
 	{
 		writeString(root, "releaseTime", file->m_releaseTimeString);
@@ -122,20 +131,21 @@ QJsonDocument OneSixFormat::toJson(PackagePtr file, bool saveOrder)
 	writeStringList(root, "+tweakers", resourceData.addTweakers);
 	writeStringList(root, "-tweakers", resourceData.removeTweakers);
 	writeStringList(root, "+traits", resourceData.traits.toList());
-	writeObjectList<OneSixFormat>(root, "libraries", resourceData.libraries.overwriteLibs);
-	if (!resourceData.libraries.addLibs.isEmpty())
+	writeObjectList<OneSixFormat>(root, "libraries", toOneSixLibraries(resourceData.libraries->overwriteLibs +
+																	   resourceData.natives->overwriteLibs));
+	if (!resourceData.libraries->addLibs.isEmpty() || !resourceData.natives->addLibs.isEmpty())
 	{
 		QJsonArray array;
-		for(auto plusLib: resourceData.libraries.addLibs)
+		for(auto plusLib: (resourceData.libraries->addLibs + resourceData.natives->addLibs))
 		{
 			// filter out the 'minecraft version'
-			if(plusLib->artifactPrefix() == "net.minecraft:minecraft")
+			if(plusLib->name().artifactPrefix() == "net.minecraft:minecraft")
 			{
 				// and write it in the old format instead
-				writeString(root, "id", plusLib->version());
+				writeString(root, "id", plusLib->name().version());
 				continue;
 			}
-			array.append(OneSixFormat::toJson(plusLib));
+			array.append(OneSixFormat::toJson(std::dynamic_pointer_cast<Library>(plusLib)));
 		}
 		// we could have removed minecraft from the array of libs. Do not write empty array.
 		if(!array.isEmpty())
@@ -143,10 +153,10 @@ QJsonDocument OneSixFormat::toJson(PackagePtr file, bool saveOrder)
 			root.insert("+libraries", array);
 		}
 	}
-	if (resourceData.libraries.removeLibs.size())
+	if (!resourceData.libraries->removeLibs.isEmpty() || !resourceData.natives->removeLibs.isEmpty())
 	{
 		QJsonArray array;
-		for (auto lib : resourceData.libraries.removeLibs)
+		for (auto lib : (resourceData.libraries->removeLibs + resourceData.natives->removeLibs))
 		{
 			QJsonObject rmlibobj;
 			rmlibobj.insert("name", lib);

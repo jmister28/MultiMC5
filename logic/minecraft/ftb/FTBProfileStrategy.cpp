@@ -48,12 +48,12 @@ void FTBProfileStrategy::loadDefaultBuiltinPatches()
 			auto minecraftPatch = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
 
 			// adapt the loaded file - the FTB patch file format is different than ours.
-			minecraftPatch->resources.libraries.addLibs = minecraftPatch->resources.libraries.overwriteLibs;
-			minecraftPatch->resources.libraries.overwriteLibs.clear();
-			minecraftPatch->resources.libraries.shouldOverwriteLibs = false;
+			minecraftPatch->resources.libraries->addLibs = minecraftPatch->resources.libraries->overwriteLibs;
+			minecraftPatch->resources.libraries->overwriteLibs.clear();
+			minecraftPatch->resources.libraries->shouldOverwriteLibs = false;
 			// FIXME: possibly broken, needs testing
 			// file->id.clear();
-			for(auto addLib: minecraftPatch->resources.libraries.addLibs)
+			for(auto addLib: minecraftPatch->resources.libraries->addLibs)
 			{
 				addLib->m_hint = "local";
 				addLib->insertType = Library::Prepend;

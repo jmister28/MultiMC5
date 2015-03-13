@@ -78,7 +78,7 @@ void OneSixFTBInstance::copy(const QDir &newDir)
 		for (auto library : libraryNames)
 		{
 			Library lib;
-			lib.setRawName(GradleSpecifier(library));
+			lib.setName(GradleSpecifier(library));
 			const QString out = QDir::current().absoluteFilePath("libraries/" + lib.storagePath());
 			if (QFile::exists(out))
 			{
@@ -90,7 +90,7 @@ void OneSixFTBInstance::copy(const QDir &newDir)
 			}
 			if (!QFile::copy(librariesPath().absoluteFilePath(lib.storagePath()), out))
 			{
-				qCritical() << "Couldn't copy" << lib.rawName();
+				qCritical() << "Couldn't copy" << lib.name();
 			}
 		}
 	}

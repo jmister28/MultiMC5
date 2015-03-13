@@ -5,15 +5,17 @@
 #include <modutils.h>
 #include "Env.h"
 #include "minecraft/Mod.h"
+#include "Functional.h"
 
-namespace Minecraft {
+namespace Minecraft
+{
 
 int findLibraryByName(QList<LibraryPtr> haystack, const GradleSpecifier &needle)
 {
 	int retval = -1;
 	for (int i = 0; i < haystack.size(); ++i)
 	{
-		if (haystack.at(i)->rawName().matchName(needle))
+		if (haystack.at(i)->name().matchName(needle))
 		{
 			// only one is allowed.
 			if (retval != -1)
@@ -24,86 +26,50 @@ int findLibraryByName(QList<LibraryPtr> haystack, const GradleSpecifier &needle)
 	return retval;
 }
 
-QList<LibraryPtr> Libraries::getActiveNormalLibs()
+QList<LibraryPtr> Libraries::getActiveLibs() const
 {
-	QList<LibraryPtr> output;
-	for (auto lib : overwriteLibs)
+	QList<LibraryPtr> out;
+	for (const LibraryPtr &ptr : overwriteLibs)
 	{
-		if (lib->isActive() && !lib->isNative())
+		if (ptr->isActive())
 		{
-			for (auto other : output)
+			for (const LibraryPtr &other : out)
 			{
-				if (other->rawName() == lib->rawName())
+				if (other->name() == ptr->name())
 				{
-					qWarning() << "Multiple libraries with name" << lib->rawName() << "in library list!";
+					qWarning() << "Multiple libraries with name" << ptr->name()
+							   << "in library list!";
 					continue;
 				}
 			}
-			output.append(lib);
+			out.append(ptr);
 		}
 	}
-	return output;
+	return out;
 }
 
-QList<LibraryPtr> Libraries::getActiveNativeLibs()
+void Libraries::applyTo(const ResourcePtr &target) const
 {
-	QList<LibraryPtr> output;
-	for (auto lib : overwriteLibs)
+	std::shared_ptr<Libraries> other = std::dynamic_pointer_cast<Libraries>(target);
+	if (shouldOverwriteLibs)
 	{
-		if (lib->isActive() && lib->isNative())
-		{
-			output.append(lib);
-		}
+		other->overwriteLibs = overwriteLibs;
 	}
-	return output;
-}
-
-
-void Libraries::apply(Libraries &other)
-{
-	if (other.shouldOverwriteLibs)
-	{
-		overwriteLibs = other.overwriteLibs;
-	}
-	for (auto addedLibrary : other.addLibs)
+	for (auto addedLibrary : addLibs)
 	{
 		switch (addedLibrary->insertType)
 		{
 		case Library::Apply:
 		{
 			// qDebug() << "Applying lib " << lib->name;
-			int index = findLibraryByName(overwriteLibs, addedLibrary->rawName());
+			int index = findLibraryByName(overwriteLibs, addedLibrary->name());
 			if (index >= 0)
 			{
-				auto existingLibrary = overwriteLibs[index];
-				if (!addedLibrary->m_base_url.isNull())
-				{
-					existingLibrary->setBaseUrl(addedLibrary->m_base_url);
-				}
-				if (!addedLibrary->m_hint.isNull())
-				{
-					existingLibrary->setHint(addedLibrary->m_hint);
-				}
-				if (!addedLibrary->m_absolute_url.isNull())
-				{
-					existingLibrary->setAbsoluteUrl(addedLibrary->m_absolute_url);
-				}
-				if (addedLibrary->applyExcludes)
-				{
-					existingLibrary->extract_excludes = addedLibrary->extract_excludes;
-				}
-				if (addedLibrary->isNative())
-				{
-					existingLibrary->m_native_classifiers = addedLibrary->m_native_classifiers;
-				}
-				if (addedLibrary->applyRules)
-				{
-					existingLibrary->setRules(addedLibrary->m_rules);
-				}
+				addedLibrary->applyTo(overwriteLibs[index]);
 			}
 			else
 			{
-				qWarning() << "Couldn't find" << addedLibrary->rawName() << "(skipping)";
+				qWarning() << "Couldn't find" << addedLibrary->name() << "(skipping)";
 			}
 			break;
 		}
@@ -111,36 +77,37 @@ void Libraries::apply(Libraries &other)
 		case Library::Prepend:
 		{
 			// find the library by name.
-			const int index = findLibraryByName(overwriteLibs, addedLibrary->rawName());
+			const int index = findLibraryByName(other->overwriteLibs, addedLibrary->name());
 			// library not found? just add it.
 			if (index < 0)
 			{
 				if (addedLibrary->insertType == Library::Append)
 				{
-					overwriteLibs.append(addedLibrary);
+					other->overwriteLibs.append(addedLibrary);
 				}
 				else
 				{
-					overwriteLibs.prepend(addedLibrary);
+					other->overwriteLibs.prepend(addedLibrary);
 				}
 				break;
 			}
 
 			// otherwise apply differences, if allowed
-			auto existingLibrary = overwriteLibs.at(index);
-			const Util::Version addedVersion = addedLibrary->version();
-			const Util::Version existingVersion = existingLibrary->version();
+			auto existingLibrary = other->overwriteLibs.at(index);
+			const Util::Version addedVersion = addedLibrary->name().version();
+			const Util::Version existingVersion = existingLibrary->name().version();
 			// if the existing version is a hard dependency we can either use it or
 			// fail, but we can't change it
 			if (existingLibrary->dependType == Library::Hard)
 			{
 				// we need a higher version, or we're hard to and the versions aren't equal
-				if (addedVersion > existingVersion || (addedLibrary->dependType == Library::Hard && addedVersion != existingVersion))
+				if (addedVersion > existingVersion ||
+					(addedLibrary->dependType == Library::Hard &&
+					 addedVersion != existingVersion))
 				{
-					throw VersionBuildError(QObject::tr(
-						"Error resolving library dependencies between %1 and %2.")
-												.arg(existingLibrary->rawName(),
-													 addedLibrary->rawName()));
+					throw VersionBuildError(
+						QObject::tr("Error resolving library dependencies between %1 and %2.")
+							.arg(existingLibrary->name(), addedLibrary->name()));
 				}
 				else
 				{
@@ -152,7 +119,7 @@ void Libraries::apply(Libraries &other)
 				// if we are higher it means we should update
 				if (addedVersion > existingVersion)
 				{
-					overwriteLibs.replace(index, addedLibrary);
+					other->overwriteLibs.replace(index, addedLibrary);
 				}
 				else
 				{
@@ -160,10 +127,10 @@ void Libraries::apply(Libraries &other)
 					// it: fail
 					if (addedLibrary->dependType == Library::Hard)
 					{
-						throw VersionBuildError(QObject::tr(
-							"Error resolving library dependencies between %1 and %2.")
-													.arg(existingLibrary->rawName(),
-														 addedLibrary->rawName()));
+						throw VersionBuildError(
+							QObject::tr(
+								"Error resolving library dependencies between %1 and %2.")
+								.arg(existingLibrary->name(), addedLibrary->name()));
 					}
 				}
 			}
@@ -174,17 +141,17 @@ void Libraries::apply(Libraries &other)
 			GradleSpecifier toReplace;
 			if (addedLibrary->insertData.isEmpty())
 			{
-				toReplace = addedLibrary->rawName();
+				toReplace = addedLibrary->name();
 			}
 			else
 			{
 				toReplace = addedLibrary->insertData;
 			}
 			// qDebug() << "Replacing lib " << toReplace << " with " << lib->name;
-			int index = findLibraryByName(overwriteLibs, toReplace);
+			int index = findLibraryByName(other->overwriteLibs, toReplace);
 			if (index >= 0)
 			{
-				overwriteLibs.replace(index, addedLibrary);
+				other->overwriteLibs.replace(index, addedLibrary);
 			}
 			else
 			{
@@ -196,11 +163,11 @@ void Libraries::apply(Libraries &other)
 	}
 	for (auto lib : removeLibs)
 	{
-		int index = findLibraryByName(overwriteLibs, lib);
+		int index = findLibraryByName(other->overwriteLibs, lib);
 		if (index >= 0)
 		{
 			// qDebug() << "Removing lib " << lib;
-			overwriteLibs.removeAt(index);
+			other->overwriteLibs.removeAt(index);
 		}
 		else
 		{
@@ -209,125 +176,100 @@ void Libraries::apply(Libraries &other)
 	}
 }
 
+void Libraries::load(const QJsonValue &data)
+{
+	DownloadableResource::load(data);
+	addLibs = Functional::map(&std::dynamic_pointer_cast<Library, BaseDownload>, downloads());
+}
+
 class JarlibUpdate : public Task
 {
 	Q_OBJECT
 public:
-	explicit JarlibUpdate(Libraries & libs, QObject *parent = 0) : Task(parent), m_libs(libs) {}
-	virtual void executeTask();
+	explicit JarlibUpdate(const Libraries *libs, QObject *parent = nullptr)
+		: Task(parent), m_libs(libs)
+	{
+	}
+	void executeTask() override
+	{
+		jarlibStart();
+	}
 
-private
-slots:
-	void jarlibStart();
-	void jarlibFinished();
-	void jarlibFailed();
+private slots:
+	void jarlibStart()
+	{
+		setStatus(tr("Getting the library files from Mojang..."));
+		qDebug() << "downloading libraries";
+
+		auto job = new NetJob(tr("Libraries"));
+		jarlibDownloadJob.reset(job);
+
+		QList<LibraryPtr> brokenLocalLibs;
+
+		for (auto lib : m_libs->getActiveLibs())
+		{
+			try
+			{
+				for (NetActionPtr ptr : lib->createNetActions())
+				{
+					job->addNetAction(ptr);
+				}
+			}
+			catch (...)
+			{
+				brokenLocalLibs.append(lib);
+			}
+		}
+		if (!brokenLocalLibs.empty())
+		{
+			jarlibDownloadJob.reset();
+			QStringList failed;
+			for (auto brokenLib : brokenLocalLibs)
+			{
+				failed.append(brokenLib->files());
+			}
+			QString failed_all = failed.join("\n");
+			emitFailed(
+				tr("Some libraries marked as 'local' are missing their jar "
+				   "files:\n%1\n\nYou'll have to correct this problem manually. If this is "
+				   "an externally tracked instance, make sure to run it at least once "
+				   "outside of MultiMC.").arg(failed_all));
+			return;
+		}
+
+		connect(jarlibDownloadJob.get(), SIGNAL(succeeded()), SLOT(jarlibFinished()));
+		connect(jarlibDownloadJob.get(), SIGNAL(failed()), SLOT(jarlibFailed()));
+		connect(jarlibDownloadJob.get(), SIGNAL(progress(qint64, qint64)),
+				SIGNAL(progress(qint64, qint64)));
+
+		jarlibDownloadJob->start();
+	}
+	void jarlibFinished()
+	{
+		emitSucceeded();
+	}
+	void jarlibFailed()
+	{
+		QStringList failed = jarlibDownloadJob->getFailedFiles();
+		QString failed_all = failed.join("\n");
+		emitFailed(tr("Failed to download the following files:\n%1\n\nPlease try again.")
+					   .arg(failed_all));
+	}
 
 private:
 	NetJobPtr jarlibDownloadJob;
-	Libraries & m_libs;
+	const Libraries *m_libs;
 };
 
-void JarlibUpdate::executeTask()
+DownloadPtr Libraries::createDownload() const
 {
-	jarlibStart();
+	return std::make_shared<Library>();
 }
 
-void JarlibUpdate::jarlibStart()
+Task *Libraries::updateTask() const
 {
-	setStatus(tr("Getting the library files from Mojang..."));
-	qDebug() << "downloading libraries";
-
-	auto job = new NetJob(tr("Libraries"));
-	jarlibDownloadJob.reset(job);
-
-	auto libs = m_libs.getActiveNativeLibs();
-	libs.append(m_libs.getActiveNormalLibs());
-
-	auto metacache = ENV.metacache();
-	QList<LibraryPtr> brokenLocalLibs;
-
-	for (auto lib : libs)
-	{
-		if (lib->hint() == "local")
-		{
-			// FIXME: instance-internal storage disregarded, copypasta, invisible coupling by the way of a magical FS path
-			if (!lib->filesExist(QDir::current().absoluteFilePath("libraries")))
-				brokenLocalLibs.append(lib);
-			continue;
-		}
-
-		QString raw_storage = lib->storagePath();
-		QString raw_dl = lib->downloadUrl();
-
-		auto f = [&](QString storage, QString dl)
-		{
-			auto entry = metacache->resolveEntry("libraries", storage);
-			if (entry->stale)
-			{
-				jarlibDownloadJob->addNetAction(CacheDownload::make(dl, entry));
-			}
-		};
-		if (raw_storage.contains("${arch}"))
-		{
-			QString cooked_storage = raw_storage;
-			QString cooked_dl = raw_dl;
-			f(cooked_storage.replace("${arch}", "32"), cooked_dl.replace("${arch}", "32"));
-			cooked_storage = raw_storage;
-			cooked_dl = raw_dl;
-			f(cooked_storage.replace("${arch}", "64"), cooked_dl.replace("${arch}", "64"));
-		}
-		else
-		{
-			f(raw_storage, raw_dl);
-		}
-	}
-	if (!brokenLocalLibs.empty())
-	{
-		jarlibDownloadJob.reset();
-		QStringList failed;
-		for (auto brokenLib : brokenLocalLibs)
-		{
-			failed.append(brokenLib->files());
-		}
-		QString failed_all = failed.join("\n");
-		emitFailed(tr("Some libraries marked as 'local' are missing their jar "
-					  "files:\n%1\n\nYou'll have to correct this problem manually. If this is "
-					  "an externally tracked instance, make sure to run it at least once "
-					  "outside of MultiMC.").arg(failed_all));
-		return;
-	}
-
-	connect(jarlibDownloadJob.get(), SIGNAL(succeeded()), SLOT(jarlibFinished()));
-	connect(jarlibDownloadJob.get(), SIGNAL(failed()), SLOT(jarlibFailed()));
-	connect(jarlibDownloadJob.get(), SIGNAL(progress(qint64, qint64)),
-			SIGNAL(progress(qint64, qint64)));
-
-	jarlibDownloadJob->start();
+	return new JarlibUpdate(this);
 }
-
-void JarlibUpdate::jarlibFinished()
-{
-	emitSucceeded();
-}
-
-void JarlibUpdate::jarlibFailed()
-{
-	QStringList failed = jarlibDownloadJob->getFailedFiles();
-	QString failed_all = failed.join("\n");
-	emitFailed(tr("Failed to download the following files:\n%1\n\nPlease try again.").arg(failed_all));
-}
-
-
-Task *Libraries::updateTask()
-{
-	return new JarlibUpdate(*this);
-}
-
-Task *Libraries::prelaunchTask()
-{
-	return nullptr;
-}
-
 }
 
 #include "Libraries.moc"

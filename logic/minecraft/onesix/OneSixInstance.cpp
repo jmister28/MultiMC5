@@ -152,13 +152,13 @@ QStringList OneSixInstance::processMinecraftArgs(AuthSessionPtr session)
 	QString absRootDir = QDir(minecraftRoot()).absolutePath();
 	token_mapping["game_directory"] = absRootDir;
 	QString absAssetsDir = QDir("assets/").absolutePath();
-	token_mapping["game_assets"] = m_version->resources.assets.storageFolder();
+	token_mapping["game_assets"] = m_version->resources.assets->storageFolder();
 
 	token_mapping["user_properties"] = session->serializeUserProperties();
 	token_mapping["user_type"] = session->user_type;
 	// 1.7.3+ assets tokens
 	token_mapping["assets_root"] = absAssetsDir;
-	token_mapping["assets_index_name"] = m_version->resources.assets.id();
+	token_mapping["assets_index_name"] = m_version->resources.assets->id();
 
 	QStringList parts = args_pattern.split(' ', QString::SkipEmptyParts);
 	for (int i = 0; i < parts.length(); i++)
@@ -179,11 +179,11 @@ BaseProcess *OneSixInstance::prepareForLaunch(AuthSessionPtr session)
 	if (!m_version)
 		return nullptr;
 
-	auto libs = m_version->resources.libraries.getActiveNormalLibs();
+	auto libs = m_version->resources.libraries->getActiveLibs();
 	for (auto lib : libs)
 	{
 		// FIXME: stupid hardcoded thing
-		if(lib->artifactPrefix() == "net.minecraft:minecraft")
+		if(lib->name().artifactPrefix() == "net.minecraft:minecraft")
 		{
 			if(!m_version->resources.jarMods.isEmpty())
 			{
@@ -215,14 +215,14 @@ BaseProcess *OneSixInstance::prepareForLaunch(AuthSessionPtr session)
 				return nullptr;
 			}
 		}
-		auto libs = m_version->resources.libraries.getActiveNormalLibs();
+		auto libs = m_version->resources.libraries->getActiveLibs();
 		QString sourceJarPath;
 
 		// find net.minecraft:minecraft
 		for(auto foo:libs)
 		{
 			// FIXME: stupid hardcoded thing
-			if(foo->artifactPrefix() == "net.minecraft:minecraft")
+			if(foo->name().artifactPrefix() == "net.minecraft:minecraft")
 			{
 				sourceJarPath = librariesPath().absoluteFilePath( foo->storagePath());
 				break;
@@ -277,7 +277,7 @@ BaseProcess *OneSixInstance::prepareForLaunch(AuthSessionPtr session)
 	// native libraries (mostly LWJGL)
 	{
 		QDir natives_dir(PathCombine(instanceRoot(), "natives/"));
-		for (auto native : m_version->resources.libraries.getActiveNativeLibs())
+		for (auto native : m_version->resources.natives->getActiveLibs())
 		{
 			QFileInfo finfo(PathCombine("libraries", native->storagePath()));
 			launchScript += "ext " + finfo.absoluteFilePath() + "\n";
@@ -292,6 +292,7 @@ BaseProcess *OneSixInstance::prepareForLaunch(AuthSessionPtr session)
 	}
 	launchScript += "launcher onesix\n";
 
+	qDebug() << launchScript;
 	auto process = Minecraft::Process::create(std::dynamic_pointer_cast<MinecraftInstance>(getSharedPtr()));
 	process->setLaunchScript(launchScript);
 	process->setWorkdir(minecraftRoot());

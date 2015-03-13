@@ -17,14 +17,18 @@ SET(LOGIC_SOURCES
 	MMCError.h
 	MMCZip.h
 	MMCZip.cpp
-	MetaPackageList.cpp
-	MetaPackageList.h
-	ParseUtils.cpp
-	ParseUtils.h
 
 	# WARNING: globals live here
 	Env.h
 	Env.cpp
+
+	# Various utility classes
+	Json.h
+	Json.cpp
+	Exception.h
+	FileSystem.h
+	FileSystem.cpp
+	Functional.h
 
 	# JSON parsing helpers
 	MMCJson.h
@@ -38,6 +42,20 @@ SET(LOGIC_SOURCES
 
 	# a smart pointer wrapper intended for safer use with Qt signal/slot mechanisms
 	QObjectPtr.h
+
+	# Wonko stuff
+	wonko/BaseResource.h
+	wonko/BaseResource.cpp
+	wonko/DownloadableResource.cpp
+	wonko/DownloadableResource.h
+	wonko/WonkoVersionList.h
+	wonko/WonkoVersionList.cpp
+	wonko/WonkoPackageVersion.h
+	wonko/WonkoPackageVersion.cpp
+	wonko/Rules.h
+	wonko/Rules.cpp
+	wonko/OpSys.h
+	wonko/OpSys.cpp
 
 	# network stuffs
 	net/NetAction.h
@@ -147,9 +165,6 @@ SET(LOGIC_SOURCES
 	minecraft/Patch.h
 	minecraft/Resources.h
 	minecraft/NullProfileStrategy.h
-	minecraft/OneSixRule.h
-	minecraft/OpSys.cpp
-	minecraft/OpSys.h
 	minecraft/ProfileUtils.cpp
 	minecraft/ProfileUtils.h
 	minecraft/ProfileStrategy.h

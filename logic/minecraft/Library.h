@@ -5,52 +5,61 @@
 #include <QStringList>
 #include <QMap>
 #include <QDir>
+#include <QUrl>
+#include <QSet>
 #include <memory>
 
-#include "minecraft/OneSixRule.h"
-#include "minecraft/OpSys.h"
+#include "wonko/OpSys.h"
 #include "GradleSpecifier.h"
 #include "net/URLConstants.h"
+#include "wonko/DownloadableResource.h"
 
-class Library;
-typedef std::shared_ptr<Library> LibraryPtr;
+using RulesPtr = std::shared_ptr<class Rules>;
+using LibraryPtr = std::shared_ptr<class Library>;
 
-class Library
+class Library : public BaseDownload
 {
+public:
+	virtual ~Library()
+	{
+	}
+
 public: /* methods */
 	/// Returns the raw name field
-	const GradleSpecifier & rawName() const
+	const GradleSpecifier &name() const
 	{
 		return m_name;
 	}
 
-	void setRawName(const GradleSpecifier & spec)
+	void setName(const GradleSpecifier &spec)
 	{
 		m_name = spec;
 	}
 
-	void setClassifier(const QString & spec)
+	/// Set the url base for downloads
+	void setBaseUrl(const QUrl &base_url)
 	{
-		m_name.setClassifier(spec);
+		m_base_url = base_url;
 	}
 
-	/// returns the full group and artifact prefix
-	QString artifactPrefix() const
+	/// List of files this library describes. Required because of platform-specificness of
+	/// native libs
+	QStringList files() const;
+
+	/// List Shortcut for checking if all the above files exist
+	bool filesExist(const QDir &base) const;
+
+	void setAbsoluteUrl(const QUrl &absolute_url)
 	{
-		return m_name.artifactPrefix();
+		m_absolute_url = absolute_url;
 	}
 
-	/// get the artifact ID
-	QString artifactId() const
+	QUrl absoluteUrl() const
 	{
-		return m_name.artifactId();
+		return m_absolute_url;
 	}
 
-	/// get the artifact version
-	QString version() const
-	{
-		return m_name.version();
-	}
+	void applyTo(const LibraryPtr &other);
 
 	/// Returns true if the library is native
 	bool isNative() const
@@ -58,27 +67,8 @@ public: /* methods */
 		return m_native_classifiers.size() != 0;
 	}
 
-	/// Set the url base for downloads
-	void setBaseUrl(const QString &base_url)
-	{
-		m_base_url = base_url;
-	}
-
-	/// List of files this library describes. Required because of platform-specificness of native libs
-	QStringList files() const;
-
-	/// List Shortcut for checking if all the above files exist
-	bool filesExist(const QDir &base) const;
-
-	void setAbsoluteUrl(const QString &absolute_url)
-	{
-		m_absolute_url = absolute_url;
-	}
-
-	QString absoluteUrl() const
-	{
-		return m_absolute_url;
-	}
+	/// Get the relative path where the library should be saved
+	QString storagePath() const;
 
 	void setHint(const QString &hint)
 	{
@@ -91,7 +81,7 @@ public: /* methods */
 	}
 
 	/// Set the load rules
-	void setRules(QList<std::shared_ptr<Rule>> rules)
+	void setRules(const RulesPtr rules)
 	{
 		m_rules = rules;
 	}
@@ -99,45 +89,16 @@ public: /* methods */
 	/// Returns true if the library should be loaded (or extracted, in case of natives)
 	bool isActive() const;
 
-	/// Get the URL to download the library from
-	QString downloadUrl() const;
-
-	/// Get the relative path where the library should be saved
-	QString storagePath() const;
-
-
 public: /* data */
 	// TODO: make all of these protected, clean up semantics of implicit vs. explicit values.
 	/// the basic gradle dependency specifier.
 	GradleSpecifier m_name;
-	/// where to store the lib locally
-	QString m_storage_path;
-	/// is this lib actually active on the current OS?
-	bool m_is_active = false;
 
 	/// URL where the file can be downloaded
-	QString m_base_url;
+	QUrl m_base_url;
 
 	/// absolute URL. takes precedence the normal download URL, if defined
-	QString m_absolute_url;
-
-	/// type hint - modifies how the library is treated
-	QString m_hint;
-
-	/// true if the library had an extract/excludes section (even empty)
-	bool applyExcludes = false;
-
-	/// a list of files that shouldn't be extracted from the library
-	QStringList extract_excludes;
-
-	/// native suffixes per OS
-	QMap<OpSys, QString> m_native_classifiers;
-
-	/// true if the library had a rules section (even empty)
-	bool applyRules = false;
-
-	/// rules associated with the library
-	QList<std::shared_ptr<Rule>> m_rules;
+	QUrl m_absolute_url;
 
 	/// used for '+' libraries, determines how to add them
 	enum InsertType
@@ -155,4 +116,28 @@ public: /* data */
 		Soft, //! needs equal or newer version
 		Hard  //! needs equal version (different versions mean version conflict)
 	} dependType = Soft;
+
+	/// type hint - modifies how the library is treated
+	QString m_hint;
+
+	/// true if the library had an extract/excludes section (even empty)
+	bool applyExcludes = false;
+
+	/// a list of files that shouldn't be extracted from the library
+	QStringList extract_excludes;
+
+	/// native suffixes per OS
+	QMap<OpSys, QString> m_native_classifiers;
+
+	/// true if the library had a rules section (even empty)
+	bool applyRules = false;
+
+	/// rules associated with the library
+	RulesPtr m_rules;
+
+	// BaseDownload interface
+public:
+	QUrl url() const override;
+	void load(const QJsonObject &data) override;
+	QList<NetActionPtr> createNetActions() const override;
 };

@@ -14,20 +14,25 @@
 namespace Minecraft
 {
 
-struct Resources
+class Resources
 {
-	Task * updateTask()
+public:
+	Task *updateTask()
 	{
 		auto sequence = new SequentialTask();
-		if(auto librariesTask = libraries.updateTask())
+		if (Task *librariesTask = libraries->updateTask())
 		{
 			sequence->addTask(std::shared_ptr<Task>(librariesTask));
 		}
-		if(auto assetsTask = assets.updateTask())
+		if (Task *nativesTask = natives->updateTask())
+		{
+			sequence->addTask(std::shared_ptr<Task>(nativesTask));
+		}
+		if (Task *assetsTask = assets->updateTask())
 		{
 			sequence->addTask(std::shared_ptr<Task>(assetsTask));
 		}
-		if(sequence->size() == 0)
+		if (sequence->size() == 0)
 		{
 			delete sequence;
 			return nullptr;
@@ -37,23 +42,23 @@ struct Resources
 
 	void clear()
 	{
-		assets.clear();
+		assets->clear();
 		minecraftArguments.clear();
 		tweakers.clear();
 		mainClass.clear();
 		appletClass.clear();
-		libraries.clear();
+		libraries->clear();
 		traits.clear();
 		jarMods.clear();
-	};
+	}
 
 	void finalize()
 	{
-		assets.finalize();
+		assets->finalize();
 	}
 
 	/// Assets type - "legacy" or a version ID
-	Assets assets;
+	std::shared_ptr<Assets> assets = std::make_shared<Assets>();
 	/**
 	 * arguments that should be used for launching minecraft
 	 *
@@ -75,7 +80,8 @@ struct Resources
 	QString appletClass;
 
 	/// the list of libs - both active and inactive, native and java
-	Libraries libraries;
+	std::shared_ptr<Libraries> libraries = std::make_shared<Libraries>();
+	std::shared_ptr<Libraries> natives = std::make_shared<Libraries>();
 
 	/// traits, collected from all the version files (version files can only add)
 	QSet<QString> traits;
