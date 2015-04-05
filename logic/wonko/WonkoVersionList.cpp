@@ -58,7 +58,7 @@ public:
 		m_dlJob->addNetAction(m_dl);
 
 		connect(m_dlJob.get(), &NetJob::succeeded, this, &CachedListLoadTask::list_downloaded);
-		connect(m_dlJob.get(), &NetJob::failed, [this]()
+		connect(m_dlJob.get(), &NetJob::failed, [this](QString reason)
 				{
 			emitFailed(m_dlJob->failReason());
 		});
@@ -113,7 +113,7 @@ public:
 
 		connect(m_dlJob.get(), &NetJob::succeeded, this,
 				&CachedVersionUpdateTask::emitSucceeded);
-		connect(m_dlJob.get(), &NetJob::failed, [this]()
+		connect(m_dlJob.get(), &NetJob::failed, [this](QString reason)
 				{
 			emitFailed(m_dlJob->failReason());
 		});

@@ -195,10 +195,10 @@ private
 slots:
 	void assetIndexStart();
 	void assetIndexFinished();
-	void assetIndexFailed();
+	void assetIndexFailed(QString error);
 
 	void assetsFinished();
-	void assetsFailed();
+	void assetsFailed(QString error);
 
 private:
 	NetJobPtr assetDlJob;
@@ -226,7 +226,7 @@ void AssetsUpdate::assetIndexStart()
 	assetDlJob.reset(job);
 
 	connect(assetDlJob.get(), SIGNAL(succeeded()), SLOT(assetIndexFinished()));
-	connect(assetDlJob.get(), SIGNAL(failed()), SLOT(assetIndexFailed()));
+	connect(assetDlJob.get(), SIGNAL(failed(QString)), SLOT(assetIndexFailed(QString)));
 	connect(assetDlJob.get(), SIGNAL(progress(qint64, qint64)),
 			SIGNAL(progress(qint64, qint64)));
 
@@ -268,7 +268,7 @@ void AssetsUpdate::assetIndexFinished()
 			job->addNetAction(dl);
 		assetDlJob.reset(job);
 		connect(assetDlJob.get(), SIGNAL(succeeded()), SLOT(assetsFinished()));
-		connect(assetDlJob.get(), SIGNAL(failed()), SLOT(assetsFailed()));
+		connect(assetDlJob.get(), SIGNAL(failed(QString)), SLOT(assetsFailed(QString)));
 		connect(assetDlJob.get(), SIGNAL(progress(qint64, qint64)),
 				SIGNAL(progress(qint64, qint64)));
 		assetDlJob->start();
@@ -277,9 +277,9 @@ void AssetsUpdate::assetIndexFinished()
 	assetsFinished();
 }
 
-void AssetsUpdate::assetIndexFailed()
+void AssetsUpdate::assetIndexFailed(QString error)
 {
-	emitFailed(tr("Failed to download the assets index!"));
+	emitFailed(tr("Failed to download the assets index: %1!").arg(error));
 }
 
 void AssetsUpdate::assetsFinished()
@@ -287,9 +287,9 @@ void AssetsUpdate::assetsFinished()
 	emitSucceeded();
 }
 
-void AssetsUpdate::assetsFailed()
+void AssetsUpdate::assetsFailed(QString error)
 {
-	emitFailed(tr("Failed to download assets!"));
+	emitFailed(tr("Failed to download assets: %1!").arg(error));
 }
 
 Task *Assets::prelaunchTask() const

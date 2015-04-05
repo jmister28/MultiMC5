@@ -238,7 +238,7 @@ private slots:
 		}
 
 		connect(jarlibDownloadJob.get(), SIGNAL(succeeded()), SLOT(jarlibFinished()));
-		connect(jarlibDownloadJob.get(), SIGNAL(failed()), SLOT(jarlibFailed()));
+		connect(jarlibDownloadJob.get(), SIGNAL(failed(QString)), SLOT(jarlibFailed(QString)));
 		connect(jarlibDownloadJob.get(), SIGNAL(progress(qint64, qint64)),
 				SIGNAL(progress(qint64, qint64)));
 
@@ -248,7 +248,7 @@ private slots:
 	{
 		emitSucceeded();
 	}
-	void jarlibFailed()
+	void jarlibFailed(QString error)
 	{
 		QStringList failed = jarlibDownloadJob->getFailedFiles();
 		QString failed_all = failed.join("\n");
