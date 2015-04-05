@@ -57,7 +57,7 @@ public:
 	MultiMC(int &argc, char **argv, bool test_mode = false);
 	virtual ~MultiMC();
 
-	// InstanceList, IconList, OneSixFTBInstance, LegacyUpdate, LegacyInstance, MCEditTool, JVisualVM, MinecraftInstance, JProfiler, BaseInstance
+	// InstanceList, IconList, FTBInstance, LegacyUpdate, LegacyInstance, MCEditTool, JVisualVM, MinecraftInstance, JProfiler, BaseInstance
 	std::shared_ptr<SettingsObject> settings()
 	{
 		return m_settings;

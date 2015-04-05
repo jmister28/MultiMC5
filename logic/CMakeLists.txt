@@ -133,8 +133,8 @@ SET(LOGIC_SOURCES
 	minecraft/legacy/LwjglVersionList.cpp
 
 	# FTB
-	minecraft/ftb/OneSixFTBInstance.h
-	minecraft/ftb/OneSixFTBInstance.cpp
+	minecraft/ftb/FTBInstance.h
+	minecraft/ftb/FTBInstance.cpp
 	minecraft/ftb/FTBProfileStrategy.h
 	minecraft/ftb/FTBProfileStrategy.cpp
 	minecraft/ftb/FTBPlugin.h

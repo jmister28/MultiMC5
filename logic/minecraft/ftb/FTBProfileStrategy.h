@@ -2,19 +2,15 @@
 #include "../ProfileStrategy.h"
 #include "../onesix/OneSixProfileStrategy.h"
 
-class OneSixFTBInstance;
+class FTBInstance;
 
 class FTBProfileStrategy : public OneSixProfileStrategy
 {
 public:
-	FTBProfileStrategy(OneSixFTBInstance * instance);
+	FTBProfileStrategy(FTBInstance * instance);
 	virtual ~FTBProfileStrategy() {};
 	virtual void load() override;
 	virtual bool saveOrder(ProfileUtils::PatchOrder order) override;
 	virtual bool installJarMods(QStringList filepaths) override;
 	virtual bool removePatch(PackagePtr patch) override;
-
-protected:
-	void loadDefaultBuiltinPatches();
-	void loadUserPatches();
 };

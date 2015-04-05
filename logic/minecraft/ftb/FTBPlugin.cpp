@@ -1,5 +1,5 @@
 #include "FTBPlugin.h"
-#include "OneSixFTBInstance.h"
+#include "FTBInstance.h"
 #include <BaseInstance.h>
 #include <icons/IconList.h>
 #include <InstanceList.h>
@@ -127,7 +127,7 @@ QSet<FTBRecord> discoverFTBInstances(SettingsObjectPtr globalSettings)
 	return records;
 }
 
-std::shared_ptr<OneSixFTBInstance> loadInstance(SettingsObjectPtr globalSettings, const QString &instDir)
+std::shared_ptr<FTBInstance> loadInstance(SettingsObjectPtr globalSettings, const QString &instDir)
 {
 	auto m_settings = std::make_shared<INISettingsObject>(PathCombine(instDir, "instance.cfg"));
 	m_settings->registerSetting("InstanceType", "Legacy");
@@ -136,14 +136,16 @@ std::shared_ptr<OneSixFTBInstance> loadInstance(SettingsObjectPtr globalSettings
 	{
 		return nullptr;
 	}
-	return std::make_shared<OneSixFTBInstance>(globalSettings, m_settings, instDir);
+	auto inst = std::make_shared<FTBInstance>(globalSettings, m_settings, instDir);
+	inst->init();
+	return inst;
 }
 
-std::shared_ptr<OneSixFTBInstance> createInstance(SettingsObjectPtr globalSettings, QString mcVersion, const QString &instDir)
+std::shared_ptr<FTBInstance> createInstance(SettingsObjectPtr globalSettings, QString mcVersion, const QString &instDir)
 {
 	QDir rootDir(instDir);
 
-	std::shared_ptr<OneSixFTBInstance> inst;
+	std::shared_ptr<FTBInstance> inst;
 
 	qDebug() << instDir.toUtf8();
 	if (!rootDir.exists() && !rootDir.mkpath("."))
@@ -155,7 +157,7 @@ std::shared_ptr<OneSixFTBInstance> createInstance(SettingsObjectPtr globalSettin
 	auto m_settings = std::make_shared<INISettingsObject>(PathCombine(instDir, "instance.cfg"));
 	m_settings->registerSetting("InstanceType", "Legacy");
 	m_settings->set("InstanceType", "OneSixFTB");
-	inst.reset(new OneSixFTBInstance(globalSettings, m_settings, instDir));
+	inst.reset(new FTBInstance(globalSettings, m_settings, instDir));
 	inst->setMinecraftVersion(mcVersion);
 	inst->init();
 	return inst;

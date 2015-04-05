@@ -5,11 +5,12 @@
 #include "wonko/Rules.h"
 #include "Env.h"
 #include "Json.h"
+#include <pathutils.h>
 
 QStringList Library::files() const
 {
 	QStringList retval;
-	QString storage = storagePath();
+	QString storage = storageSuffix();
 	if (storage.contains("${arch}"))
 	{
 		QString cooked_storage = storage;
@@ -46,10 +47,10 @@ QUrl Library::url() const
 
 	if (m_base_url.isEmpty())
 	{
-		return QString("https://" + URLConstants::LIBRARY_BASE) + storagePath();
+		return QString("https://" + URLConstants::LIBRARY_BASE) + storageSuffix();
 	}
 
-	return m_base_url.resolved(storagePath());
+	return m_base_url.resolved(storageSuffix());
 }
 
 bool Library::isActive() const
@@ -103,16 +104,14 @@ QList<NetActionPtr> Library::createNetActions() const
 {
 	if (hint() == "local")
 	{
-		// FIXME: instance-internal storage disregarded, copypasta, invisible coupling by the
-		// way of a magical FS path
-		if (!filesExist(QDir::current().absoluteFilePath("libraries")))
+		if (!filesExist(storagePrefix()))
 		{
 			throw Exception("Local file doesn't exist");
 		}
 		return {};
 	}
 
-	const QString raw_storage = storagePath();
+	const QString raw_storage = storageSuffix();
 	const QString raw_dl = url().toString();
 
 	QList<NetActionPtr> out;
@@ -145,7 +144,26 @@ QList<NetActionPtr> Library::createNetActions() const
 	return out;
 }
 
-QString Library::storagePath() const
+void Library::setStoragePrefix(QString prefix)
+{
+	m_storagePrefix = prefix;
+}
+
+QString Library::defaultStoragePrefix()
+{
+	return "libraries/";
+}
+
+QString Library::storagePrefix() const
+{
+	if(m_storagePrefix.isEmpty())
+	{
+		return defaultStoragePrefix();
+	}
+	return m_storagePrefix;
+}
+
+QString Library::storageSuffix() const
 {
 	// non-native? use only the gradle specifier
 	if (!isNative())
@@ -164,6 +182,16 @@ QString Library::storagePath() const
 		nativeSpec.setClassifier("INVALID");
 	}
 	return nativeSpec.toPath();
+}
+
+QString Library::storagePath() const
+{
+	return PathCombine(storagePrefix(), storageSuffix());
+}
+
+bool Library::storagePathIsDefault() const
+{
+	return m_storagePrefix.isEmpty();
 }
 
 void Library::load(const QJsonObject &data)

@@ -27,7 +27,7 @@ public:
 	explicit OneSixInstance(SettingsObjectPtr globalSettings, SettingsObjectPtr settings, const QString &rootDir);
 	virtual ~OneSixInstance(){};
 
-	virtual void init();
+	virtual void init() override;
 
 	QString minecraftVersion() const;
 	QString lwjglVersion() const;
@@ -49,7 +49,8 @@ public:
 	virtual QSet<QString> traits();
 
 	////// Directories and files //////
-	QString jarModsDir() const;
+	virtual QString jarModsDir() const;
+	virtual QDir jarmodsPath() const;
 	QString resourcePacksDir() const;
 	QString texturePacksDir() const;
 	QString loaderModsDir() const;
@@ -76,10 +77,6 @@ public:
 	std::shared_ptr<MinecraftProfile> getMinecraftProfile() const;
 
 	virtual QString getStatusbarDescription() override;
-
-	virtual QDir jarmodsPath() const;
-	virtual QDir librariesPath() const;
-	virtual QDir versionsPath() const;
 
 	bool reload() override;
 

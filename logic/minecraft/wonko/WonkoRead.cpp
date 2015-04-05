@@ -127,6 +127,12 @@ PackagePtr WonkoFormat::fromJson(const QJsonDocument &doc, const QString &filena
 
 	// actual data
 	{
+		// traits
+		if (file->resource<StringListResource>("general.traits"))
+		{
+			auto folders = file->resource<StringListResource>("general.traits");
+			result->resources.traits += QSet<QString>::fromList(folders->data());
+		}
 		// folders -> traits
 		if (file->resource<FoldersResource>("general.folders"))
 		{

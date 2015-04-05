@@ -191,7 +191,7 @@ BaseProcess *OneSixInstance::prepareForLaunch(AuthSessionPtr session)
 				continue;
 			}
 		}
-		launchScript += "cp " + librariesPath().absoluteFilePath(lib->storagePath()) + "\n";
+		launchScript += "cp " + QDir::current().absoluteFilePath(lib->storagePath()) + "\n";
 	}
 
 	// create temporary modded jar, if needed
@@ -224,7 +224,7 @@ BaseProcess *OneSixInstance::prepareForLaunch(AuthSessionPtr session)
 			// FIXME: stupid hardcoded thing
 			if(foo->name().artifactPrefix() == "net.minecraft:minecraft")
 			{
-				sourceJarPath = librariesPath().absoluteFilePath( foo->storagePath());
+				sourceJarPath = foo->storagePath();
 				break;
 			}
 		}
@@ -279,7 +279,7 @@ BaseProcess *OneSixInstance::prepareForLaunch(AuthSessionPtr session)
 		QDir natives_dir(PathCombine(instanceRoot(), "natives/"));
 		for (auto native : m_version->resources.natives->getActiveLibs())
 		{
-			QFileInfo finfo(PathCombine("libraries", native->storagePath()));
+			QFileInfo finfo(native->storagePath());
 			launchScript += "ext " + finfo.absoluteFilePath() + "\n";
 		}
 		launchScript += "natives " + natives_dir.absolutePath() + "\n";
@@ -397,19 +397,9 @@ QString OneSixInstance::getStatusbarDescription()
 	}
 }
 
-QDir OneSixInstance::librariesPath() const
-{
-	return QDir::current().absoluteFilePath("libraries");
-}
-
 QDir OneSixInstance::jarmodsPath() const
 {
 	return QDir(jarModsDir());
-}
-
-QDir OneSixInstance::versionsPath() const
-{
-	return QDir::current().absoluteFilePath("versions");
 }
 
 bool OneSixInstance::reload()

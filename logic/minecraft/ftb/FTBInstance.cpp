@@ -1,4 +1,4 @@
-#include "OneSixFTBInstance.h"
+#include "FTBInstance.h"
 #include "FTBProfileStrategy.h"
 
 #include "minecraft/MinecraftProfile.h"
@@ -9,13 +9,18 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 
-OneSixFTBInstance::OneSixFTBInstance(SettingsObjectPtr globalSettings, SettingsObjectPtr settings, const QString &rootDir) :
+FTBInstance::FTBInstance(SettingsObjectPtr globalSettings, SettingsObjectPtr settings, const QString &rootDir) :
 	OneSixInstance(globalSettings, settings, rootDir)
 {
 	m_globalSettings = globalSettings;
 }
 
-void OneSixFTBInstance::copy(const QDir &newDir)
+QString FTBInstance::FTBLibraryPrefix() const
+{
+	return QDir(m_globalSettings->get("FTBRoot").toString() + "/libraries").canonicalPath();
+}
+
+void FTBInstance::copy(const QDir &newDir)
 {
 	QStringList libraryNames;
 	// create patch file
@@ -73,13 +78,17 @@ void OneSixFTBInstance::copy(const QDir &newDir)
 		out.write(QJsonDocument(root).toJson());
 	}
 	// copy libraries
+	auto ftbprefix = FTBLibraryPrefix();
 	{
 		qDebug() << "Copying FTB libraries";
+		// FIXME: copy into the instance instead, do not pollute the global space
 		for (auto library : libraryNames)
 		{
-			Library lib;
-			lib.setName(GradleSpecifier(library));
-			const QString out = QDir::current().absoluteFilePath("libraries/" + lib.storagePath());
+			Library libIn, libOut;
+			libIn.setName(library);
+			libIn.setStoragePrefix(ftbprefix);
+			libOut.setName(library);
+			const QString out = libOut.storagePath();
 			if (QFile::exists(out))
 			{
 				continue;
@@ -88,9 +97,9 @@ void OneSixFTBInstance::copy(const QDir &newDir)
 			{
 				qCritical() << "Couldn't create folder structure for" << out;
 			}
-			if (!QFile::copy(librariesPath().absoluteFilePath(lib.storagePath()), out))
+			if (!QFile::copy(libIn.storagePath(), out))
 			{
-				qCritical() << "Couldn't copy" << lib.name();
+				qCritical() << "Couldn't copy" << libIn.storagePath() << "to" << libOut.storagePrefix();
 			}
 		}
 	}
@@ -101,27 +110,17 @@ void OneSixFTBInstance::copy(const QDir &newDir)
 	settings_obj.set("InstanceType", "OneSix");
 }
 
-QString OneSixFTBInstance::id() const
+QString FTBInstance::id() const
 {
 	return "FTB/" + BaseInstance::id();
 }
 
-QDir OneSixFTBInstance::librariesPath() const
-{
-	return QDir(m_globalSettings->get("FTBRoot").toString() + "/libraries");
-}
-
-QDir OneSixFTBInstance::versionsPath() const
-{
-	return QDir(m_globalSettings->get("FTBRoot").toString() + "/versions");
-}
-
-void OneSixFTBInstance::createProfile()
+void FTBInstance::createProfile()
 {
 	m_version.reset(new MinecraftProfile(new FTBProfileStrategy(this)));
 }
 
-QString OneSixFTBInstance::getStatusbarDescription()
+QString FTBInstance::getStatusbarDescription()
 {
 	if (flags() & VersionBrokenFlag)
 	{
@@ -130,9 +129,14 @@ QString OneSixFTBInstance::getStatusbarDescription()
 	return "OneSix FTB: " + minecraftVersion();
 }
 
-std::shared_ptr<Task> OneSixFTBInstance::doUpdate()
+std::shared_ptr<Task> FTBInstance::doUpdate()
 {
 	return OneSixInstance::doUpdate();
 }
 
-#include "OneSixFTBInstance.moc"
+QString FTBInstance::jarModsDir() const
+{
+	return PathCombine(instanceRoot(), "instMods");
+}
+
+#include "FTBInstance.moc"

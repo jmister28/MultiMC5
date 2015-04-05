@@ -67,7 +67,20 @@ public: /* methods */
 		return m_native_classifiers.size() != 0;
 	}
 
+	void setStoragePrefix(QString prefix = QString());
+
+	/// the default storage prefix used by MultiMC
+	static QString defaultStoragePrefix();
+
+	bool storagePathIsDefault() const;
+
+	/// Get the prefix - root of the storage to be used
+	QString storagePrefix() const;
+
 	/// Get the relative path where the library should be saved
+	QString storageSuffix() const;
+
+	/// Get the absolute path where the library should be saved
 	QString storagePath() const;
 
 	void setHint(const QString &hint)
@@ -119,6 +132,9 @@ public: /* data */
 
 	/// type hint - modifies how the library is treated
 	QString m_hint;
+
+	/// storage - by default the local libraries folder in multimc, but could be elsewhere
+	QString m_storagePrefix;
 
 	/// true if the library had an extract/excludes section (even empty)
 	bool applyExcludes = false;

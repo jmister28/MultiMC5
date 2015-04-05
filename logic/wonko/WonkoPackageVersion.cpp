@@ -31,6 +31,7 @@ void WonkoPackageVersion::load(const QJsonObject &obj, const QString &uid)
 #define FACTORY_FOR(CLAZZ) [] { return std::make_shared<CLAZZ>(); }
 
 	QMap<QString, std::function<ResourcePtr()>> resourceFactories;
+	resourceFactories["general.traits"] = FACTORY_FOR(StringListResource);
 	resourceFactories["general.folders"] = FACTORY_FOR(FoldersResource);
 	resourceFactories["java.libraries"] = FACTORY_FOR(Minecraft::Libraries);
 	resourceFactories["java.natives"] = FACTORY_FOR(Minecraft::Libraries);
