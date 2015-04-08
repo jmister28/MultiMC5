@@ -286,15 +286,15 @@ bool OneSixProfileStrategy::installJarMods(QStringList filepaths)
 		QString patchFileName = PathCombine(patchDir, target_id + ".json");
 		f->setPatchFilename(patchFileName);
 
-		QFile file(patchFileName);
+		QSaveFile file(patchFileName);
 		if (!file.open(QFile::WriteOnly))
 		{
 			qCritical() << "Error opening" << file.fileName()
 						<< "for reading:" << file.errorString();
 			return false;
 		}
-		file.write(OneSixFormat::toJson(f, true).toJson());
-		file.close();
+		file.write(OneSixFormat::toJson(f, false).toJson());
+		file.commit();
 		profile->appendPatch(f);
 	}
 	profile->saveCurrentOrder();

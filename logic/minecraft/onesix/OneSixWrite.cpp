@@ -121,12 +121,15 @@ QJsonDocument OneSixFormat::toJson(PackagePtr file, bool saveOrder)
 	writeString(root, "+minecraftArguments", resourceData.addMinecraftArguments);
 	writeString(root, "-minecraftArguments", resourceData.removeMinecraftArguments);
 	writeString(root, "type", file->type);
-	writeString(root, "assets", resourceData.assets->id());
+	if(resourceData.assets)
+	{
+		writeString(root, "assets", resourceData.assets->id());
+	}
 	if (file->fileId == "net.minecraft")
 	{
 		writeString(root, "releaseTime", file->m_releaseTimeString);
+		root.insert("minimumLauncherVersion", CURRENT_MINIMUM_LAUNCHER_VERSION);
 	}
-	root.insert("minimumLauncherVersion", CURRENT_MINIMUM_LAUNCHER_VERSION);
 	writeStringList(root, "tweakers", resourceData.overwriteTweakers);
 	writeStringList(root, "+tweakers", resourceData.addTweakers);
 	writeStringList(root, "-tweakers", resourceData.removeTweakers);
