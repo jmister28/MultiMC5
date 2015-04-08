@@ -76,4 +76,7 @@ private:
 public
 slots:
 	void versionCurrent(const QModelIndex &current, const QModelIndex &previous);
+
+private slots:
+	void onGameUpdateError(QString error);
 };
