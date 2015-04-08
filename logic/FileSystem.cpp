@@ -6,39 +6,12 @@
 #include <QSaveFile>
 #include <QFileInfo>
 
-void FS::ensureExists(const QDir &dir)
+void ensureExists(const QDir &dir)
 {
 	if (!QDir().mkpath(dir.absolutePath()))
 	{
-		throw FileSystemException("Unable to create directory " + dir.dirName() + " (" +
-								  dir.absolutePath() + ")");
-	}
-}
-
-void FS::remove(const QString &filename)
-{
-	QFile file(filename);
-	if (!file.remove())
-	{
-		throw FileSystemException("Unable to remove " + filename + ": " + file.errorString());
-	}
-}
-void FS::remove(const QDir &dir)
-{
-	if (!QDir(dir).removeRecursively())
-	{
-		throw FileSystemException("Unable to remove " + dir.dirName());
-	}
-}
-void FS::remove(const QFileInfo &info)
-{
-	if (info.isDir())
-	{
-		remove(QDir(info.absoluteFilePath()));
-	}
-	else if (info.isFile())
-	{
-		remove(info.absoluteFilePath());
+		throw FS::FileSystemException("Unable to create directory " + dir.dirName() + " (" +
+									  dir.absolutePath() + ")");
 	}
 }
 
@@ -62,17 +35,6 @@ void FS::write(const QString &filename, const QByteArray &data)
 								  file.errorString());
 	}
 }
-void FS::touch(const QString &filename)
-{
-	ensureExists(QFileInfo(filename).dir());
-	QFile file(filename);
-	if (!file.open(QFile::WriteOnly | QFile::Append))
-	{
-		throw FileSystemException("Couldn't open " + filename + " for writing: " +
-								  file.errorString());
-	}
-	file.close();
-}
 
 QByteArray FS::read(const QString &filename)
 {
@@ -91,93 +53,4 @@ QByteArray FS::read(const QString &filename)
 								  file.errorString());
 	}
 	return data;
-}
-
-void FS::copy(const QString &from, const QString &to)
-{
-	if (exists(to))
-	{
-		remove(to);
-	}
-	ensureExists(QFileInfo(to).dir());
-	QFile file(from);
-	if (!file.copy(to))
-	{
-		throw FileSystemException("Error copying file to " + to + ": " + file.errorString());
-	}
-}
-void FS::copy(const QString &from, const QDir &to)
-{
-	copy(from, to.absoluteFilePath(QFileInfo(from).fileName()));
-}
-
-void FS::move(const QString &from, const QString &to)
-{
-	copy(from, to);
-	remove(from);
-}
-
-bool FS::exists(const QString &filename)
-{
-	return QDir().exists(filename);
-}
-bool FS::exists(const QDir &directory)
-{
-	return directory.exists();
-}
-
-void FS::removeEmptyRecursive(const QDir &dir)
-{
-	for (const QString &child : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden))
-	{
-		removeEmptyRecursive(QDir(dir.absoluteFilePath(child)));
-	}
-	if (dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Files | QDir::Hidden |
-					  QDir::System).isEmpty())
-	{
-		remove(dir);
-	}
-}
-void FS::mergeDirectoryInto(const QDir &source, const QDir &destination)
-{
-	// ensure the directory itself exists
-	if (!FS::exists(destination))
-	{
-		FS::ensureExists(destination.absolutePath());
-	}
-	// and then move all the contents
-	for (const QFileInfo &entry :
-		 source.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot))
-	{
-		if (entry.isFile())
-		{
-			copy(entry.absoluteFilePath(), destination.absoluteFilePath(entry.fileName()));
-		}
-		else
-		{
-			mergeDirectoryInto(QDir(entry.absoluteFilePath()),
-							   destination.absoluteFilePath(entry.fileName()));
-		}
-	}
-}
-
-void FS::chunkedTransfer(QIODevice *from, QIODevice *to)
-{
-	Q_ASSERT(from->isReadable() && to->isWritable());
-
-	static constexpr qint64 bufferSize = 1024 * 1024;
-	qint64 remaining = from->bytesAvailable();
-	char buffer[bufferSize];
-	while (remaining > 0)
-	{
-		const qint64 currentChunkSize = std::min(bufferSize, remaining);
-		const qint64 actualSize = from->read(buffer, currentChunkSize);
-		Q_ASSERT(currentChunkSize == actualSize);
-		if (currentChunkSize != to->write(buffer, currentChunkSize))
-		{
-			throw FileSystemException(
-				QString("Error during chunked transfer: %1").arg(to->errorString()));
-		}
-		remaining -= currentChunkSize;
-	}
 }
