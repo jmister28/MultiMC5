@@ -89,6 +89,7 @@ void OneSixUpdate::versionUpdateSucceeded()
 		{
 			connect(task, SIGNAL(succeeded()), SLOT(emitSucceeded()));
 			connect(task, SIGNAL(failed(QString)), SLOT(emitFailed(QString)));
+			connect(task, SIGNAL(progress(qint64,qint64)), SIGNAL(progress(qint64,qint64)));
 			filesTask.reset(task);
 			task->start();
 			return;
