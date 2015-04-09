@@ -5,7 +5,7 @@
 #include "minecraft/wonko/WonkoFormat.h"
 #include "wonko/WonkoVersionList.h"
 #include "Env.h"
-#include <MMCJson.h>
+#include <Json.h>
 
 #include <pathutils.h>
 #include <QDir>
@@ -13,7 +13,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 
-OneSixProfileStrategy::OneSixProfileStrategy(OneSixInstance* instance)
+OneSixProfileStrategy::OneSixProfileStrategy(OneSixInstance *instance)
 {
 	m_instance = instance;
 }
@@ -22,88 +22,92 @@ void OneSixProfileStrategy::upgradeDeprecatedFiles()
 {
 	auto versionJsonPath = PathCombine(m_instance->instanceRoot(), "version.json");
 	auto customJsonPath = PathCombine(m_instance->instanceRoot(), "custom.json");
-	auto mcJson = PathCombine(m_instance->instanceRoot(), "patches" , "net.minecraft.json");
+	auto mcJson = PathCombine(m_instance->instanceRoot(), "patches", "net.minecraft.json");
 
 	// if custom.json exists
-	if(QFile::exists(customJsonPath))
+	if (QFile::exists(customJsonPath))
 	{
 		// can we create the patches folder to move it to?
-		if(!ensureFilePathExists(mcJson))
+		if (!ensureFilePathExists(mcJson))
 		{
 			throw VersionBuildError(QObject::tr("Unable to create path for %1").arg(mcJson));
 		}
 		// if version.json exists, remove it first
-		if(QFile::exists(versionJsonPath))
+		if (QFile::exists(versionJsonPath))
 		{
-			if(!QFile::remove(versionJsonPath))
+			if (!QFile::remove(versionJsonPath))
 			{
-				throw VersionBuildError(QObject::tr("Unable to remove obsolete %1").arg(versionJsonPath));
+				throw VersionBuildError(
+					QObject::tr("Unable to remove obsolete %1").arg(versionJsonPath));
 			}
 		}
 		// and then move the custom.json in place
-		if(!QFile::rename(customJsonPath, mcJson))
+		if (!QFile::rename(customJsonPath, mcJson))
 		{
-			throw VersionBuildError(QObject::tr("Unable to rename %1 to %2").arg(customJsonPath).arg(mcJson));
+			throw VersionBuildError(
+				QObject::tr("Unable to rename %1 to %2").arg(customJsonPath).arg(mcJson));
 		}
 	}
 	// otherwise if version.json exists
-	else if(QFile::exists(versionJsonPath))
+	else if (QFile::exists(versionJsonPath))
 	{
 		// can we create the patches folder to move it to?
-		if(!ensureFilePathExists(mcJson))
+		if (!ensureFilePathExists(mcJson))
 		{
 			throw VersionBuildError(QObject::tr("Unable to create path for %1").arg(mcJson));
 		}
 		// and then move the custom.json in place
-		if(!QFile::rename(versionJsonPath, mcJson))
+		if (!QFile::rename(versionJsonPath, mcJson))
 		{
-			throw VersionBuildError(QObject::tr("Unable to rename %1 to %2").arg(versionJsonPath).arg(mcJson));
+			throw VersionBuildError(
+				QObject::tr("Unable to rename %1 to %2").arg(versionJsonPath).arg(mcJson));
 		}
 	}
 }
 
 void OneSixProfileStrategy::loadBuiltinPatch(QString uid, QString name, QString version)
 {
-	auto mcJson = PathCombine(m_instance->instanceRoot(), "patches" , QString("%1.json").arg(uid));
+	auto mcJson =
+		PathCombine(m_instance->instanceRoot(), "patches", QString("%1.json").arg(uid));
 	// load up the base minecraft patch
 	PackagePtr minecraftPatch;
-	if(QFile::exists(mcJson))
+	if (QFile::exists(mcJson))
 	{
 		auto file = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
 		file->fileId = uid;
 		file->name = name;
-		if(file->version.isEmpty())
+		if (file->version.isEmpty())
 		{
 			file->version = QObject::tr("Custom");
 		}
 		minecraftPatch = file;
 	}
-	else if(!version.isEmpty())
+	else if (!version.isEmpty())
 	{
 		auto mc = std::dynamic_pointer_cast<WonkoVersionList>(ENV.getVersionList(uid));
 		auto path = mc->versionFilePath(version);
-		if(!QFile::exists(path))
+		if (!QFile::exists(path))
 		{
 			throw VersionIncomplete(uid);
 		}
 		QFile file(path);
 		if (!file.open(QFile::ReadOnly))
 		{
-			throw JSONValidationError(QObject::tr("Unable to open the version file %1: %2.")
-										.arg(file.fileName(), file.errorString()));
+			throw Json::JsonException(QObject::tr("Unable to open the version file %1: %2.")
+										  .arg(file.fileName(), file.errorString()));
 		}
 		QJsonParseError error;
 		QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
 		if (error.error != QJsonParseError::NoError)
 		{
-			throw JSONValidationError(
+			throw Json::JsonException(
 				QObject::tr("Unable to process the version file %1: %2 at %3.")
 					.arg(file.fileName(), error.errorString())
 					.arg(error.offset));
 		}
 		minecraftPatch = WonkoFormat::fromJson(doc, file.fileName());
 	}
-	if(minecraftPatch)
+	if (minecraftPatch)
 		profile->appendPatch(minecraftPatch);
 }
 
@@ -119,8 +123,9 @@ void OneSixProfileStrategy::loadUserPatches()
 {
 	// load all patches, put into map for ordering, apply in the right order
 	ProfileUtils::PatchOrder userOrder;
-	ProfileUtils::readOverrideOrders(PathCombine(m_instance->instanceRoot(), "order.json"), userOrder);
-	QDir patches(PathCombine(m_instance->instanceRoot(),"patches"));
+	ProfileUtils::readOverrideOrders(PathCombine(m_instance->instanceRoot(), "order.json"),
+									 userOrder);
+	QDir patches(PathCombine(m_instance->instanceRoot(), "patches"));
 
 	// first, load things by sort order.
 	for (auto id : userOrder)
@@ -137,7 +142,7 @@ void OneSixProfileStrategy::loadUserPatches()
 		// parse the file
 		QString filename = patches.absoluteFilePath(id + ".json");
 		QFileInfo finfo(filename);
-		if(!finfo.exists())
+		if (!finfo.exists())
 		{
 			qDebug() << "Patch file " << filename << " was deleted by external means...";
 			continue;
@@ -187,7 +192,6 @@ void OneSixProfileStrategy::loadUserPatches()
 	}
 }
 
-
 void OneSixProfileStrategy::load()
 {
 	profile->clearPatches();
@@ -201,7 +205,8 @@ void OneSixProfileStrategy::load()
 
 bool OneSixProfileStrategy::saveOrder(ProfileUtils::PatchOrder order)
 {
-	return ProfileUtils::writeOverrideOrders(PathCombine(m_instance->instanceRoot(), "order.json"), order);
+	return ProfileUtils::writeOverrideOrders(
+		PathCombine(m_instance->instanceRoot(), "order.json"), order);
 }
 
 bool OneSixProfileStrategy::removePatch(PackagePtr patch)
@@ -222,8 +227,8 @@ bool OneSixProfileStrategy::removePatch(PackagePtr patch)
 	auto preRemoveJarMod = [&](JarmodPtr jarMod) -> bool
 	{
 		QString fullpath = PathCombine(m_instance->jarModsDir(), jarMod->name);
-		QFileInfo finfo (fullpath);
-		if(finfo.exists())
+		QFileInfo finfo(fullpath);
+		if (finfo.exists())
 		{
 			QFile jarModFile(fullpath);
 			if(!jarModFile.remove())
@@ -236,7 +241,7 @@ bool OneSixProfileStrategy::removePatch(PackagePtr patch)
 		return true;
 	};
 
-	for(auto &jarmod: patch->resources.jarMods)
+	for (auto &jarmod : patch->resources.jarMods)
 	{
 		ok &= preRemoveJarMod(jarmod);
 	}
@@ -246,7 +251,7 @@ bool OneSixProfileStrategy::removePatch(PackagePtr patch)
 bool OneSixProfileStrategy::installJarMods(QStringList filepaths)
 {
 	QString patchDir = PathCombine(m_instance->instanceRoot(), "patches");
-	if(!ensureFolderPathExists(patchDir))
+	if (!ensureFolderPathExists(patchDir))
 	{
 		return false;
 	}
@@ -256,7 +261,7 @@ bool OneSixProfileStrategy::installJarMods(QStringList filepaths)
 		return false;
 	}
 
-	for(auto filepath:filepaths)
+	for (auto filepath : filepaths)
 	{
 		QFileInfo sourceInfo(filepath);
 		auto uuid = QUuid::createUuid();
@@ -267,12 +272,13 @@ bool OneSixProfileStrategy::installJarMods(QStringList filepaths)
 		QString finalPath = PathCombine(m_instance->jarModsDir(), target_filename);
 
 		QFileInfo targetInfo(finalPath);
-		if(targetInfo.exists())
+		if (targetInfo.exists())
 		{
 			return false;
 		}
 
-		if (!QFile::copy(sourceInfo.absoluteFilePath(),QFileInfo(finalPath).absoluteFilePath()))
+		if (!QFile::copy(sourceInfo.absoluteFilePath(),
+						 QFileInfo(finalPath).absoluteFilePath()))
 		{
 			return false;
 		}
@@ -301,4 +307,3 @@ bool OneSixProfileStrategy::installJarMods(QStringList filepaths)
 	profile->reapply();
 	return true;
 }
-

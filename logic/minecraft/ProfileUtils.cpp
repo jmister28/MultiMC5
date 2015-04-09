@@ -1,7 +1,7 @@
 #include "ProfileUtils.h"
 #include "minecraft/VersionFilterData.h"
 #include "onesix/OneSixFormat.h"
-#include "MMCJson.h"
+#include "Json.h"
 #include <QDebug>
 
 #include <QJsonDocument>
@@ -75,21 +75,21 @@ bool readOverrideOrders(QString path, PatchOrder &order)
 	// and then read it and process it if all above is true.
 	try
 	{
-		auto obj = MMCJson::ensureObject(doc);
+		auto obj = Json::ensureObject(doc);
 		// check order file version.
-		auto version = MMCJson::ensureInteger(obj.value("version"), "version");
+		auto version = Json::ensureInteger(obj.value("version"));
 		if (version != currentOrderFileVersion)
 		{
-			throw JSONValidationError(QObject::tr("Invalid order file version, expected %1")
+			throw Json::JsonException(QObject::tr("Invalid order file version, expected %1")
 										  .arg(currentOrderFileVersion));
 		}
-		auto orderArray = MMCJson::ensureArray(obj.value("order"));
+		auto orderArray = Json::ensureArray(obj.value("order"));
 		for(auto item: orderArray)
 		{
-			order.append(MMCJson::ensureString(item));
+			order.append(Json::ensureString(item));
 		}
 	}
-	catch (JSONValidationError &err)
+	catch (Json::JsonException &err)
 	{
 		qCritical() << "Couldn't parse" << orderFile.fileName() << ": bad file format";
 		qWarning() << "Ignoring overriden order";
@@ -104,14 +104,14 @@ PackagePtr parseJsonFile(const QFileInfo &fileInfo, const bool requireOrder)
 	QFile file(fileInfo.absoluteFilePath());
 	if (!file.open(QFile::ReadOnly))
 	{
-		throw JSONValidationError(QObject::tr("Unable to open the version file %1: %2.")
+		throw Json::JsonException(QObject::tr("Unable to open the version file %1: %2.")
 									  .arg(fileInfo.fileName(), file.errorString()));
 	}
 	QJsonParseError error;
 	QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
 	if (error.error != QJsonParseError::NoError)
 	{
-		throw JSONValidationError(
+		throw Json::JsonException(
 			QObject::tr("Unable to process the version file %1: %2 at %3.")
 				.arg(fileInfo.fileName(), error.errorString())
 				.arg(error.offset));

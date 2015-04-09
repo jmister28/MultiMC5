@@ -14,15 +14,8 @@ SET(LOGIC_SOURCES
 	FileStore.h
 	FileStore.cpp
 	NullInstance.h
-	MMCError.h
 	MMCZip.h
 	MMCZip.cpp
-
-	# WARNING: globals live here
-	Env.h
-	Env.cpp
-
-	# Various utility classes
 	Json.h
 	Json.cpp
 	Exception.h
@@ -30,9 +23,11 @@ SET(LOGIC_SOURCES
 	FileSystem.cpp
 	Functional.h
 
+	# WARNING: globals live here
+	Env.h
+	Env.cpp
+
 	# JSON parsing helpers
-	MMCJson.h
-	MMCJson.cpp
 
 	# RW lock protected map
 	RWStorage.h
@@ -153,7 +148,6 @@ SET(LOGIC_SOURCES
 	minecraft/SkinUtils.h
 	minecraft/SkinUtils.cpp
 	minecraft/GradleSpecifier.h
-	minecraft/JarMod.cpp
 	minecraft/JarMod.h
 	minecraft/MinecraftInstance.cpp
 	minecraft/MinecraftInstance.h

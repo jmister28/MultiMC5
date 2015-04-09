@@ -9,11 +9,6 @@
 #include "minecraft/MinecraftProfile.h"
 #include "minecraft/JarMod.h"
 
-#include "MMCJson.h"
-using namespace MMCJson;
-
-#include "VersionBuildError.h"
-
 namespace Minecraft
 {
 void Patch::applyTo(Minecraft::Resources *version)

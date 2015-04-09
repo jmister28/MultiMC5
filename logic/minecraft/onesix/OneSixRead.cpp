@@ -2,7 +2,6 @@
 #include <QJsonArray>
 
 #include "minecraft/Package.h"
-#include "MMCJson.h"
 #include "Json.h"
 #include "minecraft/Assets.h"
 #include "wonko/Rules.h"
@@ -23,7 +22,6 @@ static bool parse_timestamp(const QString &raw, QString &save_here, QDateTime &p
 	}
 	return true;
 }
-
 
 RulesPtr readLibraryRules(const QJsonObject &objectWithRules)
 {
@@ -66,14 +64,12 @@ RulesPtr readLibraryRules(const QJsonObject &objectWithRules)
 	return std::make_shared<Rules>(rules);
 }
 
-
 LibraryPtr readRawLibrary(const QJsonObject &libObj, const QString &filename)
 {
 	LibraryPtr out = std::make_shared<Library>();
 	if (!libObj.contains("name"))
 	{
-		throw JSONValidationError(filename +
-								  "contains a library that doesn't have a 'name' field");
+		throw JsonException(filename + " contains a library that doesn't have a 'name' field");
 	}
 	out->m_name = libObj.value("name").toString();
 
@@ -144,7 +140,8 @@ LibraryPtr OneSixFormat::readRawLibraryPlus(const QJsonObject &libObj, const QSt
 			}
 			else
 			{
-				throw JSONValidationError("A '+' library in " + filename + " contains an invalid insert type");
+				throw JsonException("A '+' library in " + filename +
+									" contains an invalid insert type");
 			}
 		}
 		else if (insertVal.isObject())
@@ -155,19 +152,20 @@ LibraryPtr OneSixFormat::readRawLibraryPlus(const QJsonObject &libObj, const QSt
 			QJsonObject insertObj = insertVal.toObject();
 			if (insertObj.isEmpty())
 			{
-				throw JSONValidationError("Empty compound insert rule in " + filename);
+				throw JsonException("Empty compound insert rule in " + filename);
 			}
 			QString insertString = insertObj.keys().first();
 			// really, only replace makes sense in combination with
-			if(insertString != "replace")
+			if (insertString != "replace")
 			{
-				throw JSONValidationError("Compound insert rule is not 'replace' in " + filename);
+				throw JsonException("Compound insert rule is not 'replace' in " + filename);
 			}
 			lib->insertData = insertObj.value(insertString).toString();
 		}
 		else
 		{
-			throw JSONValidationError("A '+' library in " + filename + " contains an unknown/invalid insert rule");
+			throw JsonException("A '+' library in " + filename +
+								" contains an unknown/invalid insert rule");
 		}
 	}
 	if (libObj.contains("MMC-depend"))
@@ -183,22 +181,24 @@ LibraryPtr OneSixFormat::readRawLibraryPlus(const QJsonObject &libObj, const QSt
 		}
 		else
 		{
-			throw JSONValidationError("A '+' library in " + filename + " contains an invalid depend type");
+			throw JsonException("A '+' library in " + filename +
+								" contains an invalid depend type");
 		}
 	}
 	return lib;
 }
 
-PackagePtr OneSixFormat::fromJson(const QJsonDocument& doc, const QString& filename, const bool requireOrder)
+PackagePtr OneSixFormat::fromJson(const QJsonDocument &doc, const QString &filename,
+								  const bool requireOrder)
 {
 	PackagePtr out(new Package());
 	if (doc.isEmpty() || doc.isNull())
 	{
-		throw JSONValidationError(filename + " is empty or null");
+		throw JsonException(filename + " is empty or null");
 	}
 	if (!doc.isObject())
 	{
-		throw JSONValidationError(filename + " is not an object");
+		throw JsonException(filename + " is not an object");
 	}
 
 	QJsonObject root = doc.object();
@@ -220,7 +220,7 @@ PackagePtr OneSixFormat::fromJson(const QJsonDocument& doc, const QString& filen
 	out->fileId = root.value("fileId").toString();
 	out->version = root.value("version").toString();
 	QString mcVersion = root.value("mcVersion").toString();
-	if(!mcVersion.isEmpty())
+	if (!mcVersion.isEmpty())
 	{
 		out->dependencies["net.minecraft"] = mcVersion;
 	}
@@ -243,7 +243,7 @@ PackagePtr OneSixFormat::fromJson(const QJsonDocument& doc, const QString& filen
 		return QString();
 	};
 
-	auto & resourceData = out->resources;
+	auto &resourceData = out->resources;
 	readString("mainClass", resourceData.mainClass);
 	readString("appletClass", resourceData.appletClass);
 	{
@@ -265,15 +265,14 @@ PackagePtr OneSixFormat::fromJson(const QJsonDocument& doc, const QString& filen
 			else if (toCompare == "username_session_version")
 			{
 				minecraftArguments = "--username ${auth_player_name} "
-									"--session ${auth_session} "
-									"--version ${profile_name}";
+									 "--session ${auth_session} "
+									 "--version ${profile_name}";
 			}
 		}
-		if(!minecraftArguments.isEmpty())
+		if (!minecraftArguments.isEmpty())
 		{
 			resourceData.overwriteMinecraftArguments = minecraftArguments;
 		}
-
 	}
 	readString("+minecraftArguments", resourceData.addMinecraftArguments);
 	readString("-minecraftArguments", resourceData.removeMinecraftArguments);
@@ -288,9 +287,10 @@ PackagePtr OneSixFormat::fromJson(const QJsonDocument& doc, const QString& filen
 	if (root.contains("minimumLauncherVersion"))
 	{
 		int minimumLauncherVersion = ensureInteger(root, "minimumLauncherVersion");
-		if(minimumLauncherVersion > CURRENT_MINIMUM_LAUNCHER_VERSION)
+		if (minimumLauncherVersion > CURRENT_MINIMUM_LAUNCHER_VERSION)
 		{
-			throw JSONValidationError(QString("patch %1 is in a newer format than MultiMC can handle").arg(filename));
+			throw JsonException(
+				QString("patch %1 is in a newer format than MultiMC can handle").arg(filename));
 		}
 	}
 
@@ -348,13 +348,13 @@ PackagePtr OneSixFormat::fromJson(const QJsonDocument& doc, const QString& filen
 
 	QString minecraftVersion;
 	readString("id", minecraftVersion);
-	if(!minecraftVersion.isEmpty())
+	if (!minecraftVersion.isEmpty())
 	{
 		auto libptr = std::make_shared<Library>();
 		auto name = QString("net.minecraft:minecraft:%1").arg(minecraftVersion);
 		auto url = QString("http://s3.amazonaws.com/Minecraft.Download/versions/%1/%2.jar")
-			.arg(minecraftVersion)
-			.arg(minecraftVersion);
+					   .arg(minecraftVersion)
+					   .arg(minecraftVersion);
 		libptr->setName(GradleSpecifier(name));
 		libptr->setAbsoluteUrl(url);
 	}
@@ -406,8 +406,7 @@ JarmodPtr OneSixFormat::fromJson(const QJsonObject &libObj, const QString &filen
 	JarmodPtr out(new Jarmod());
 	if (!libObj.contains("name"))
 	{
-		throw JSONValidationError(filename +
-								  "contains a jarmod that doesn't have a 'name' field");
+		throw JsonException(filename + "contains a jarmod that doesn't have a 'name' field");
 	}
 	out->name = libObj.value("name").toString();
 	return out;

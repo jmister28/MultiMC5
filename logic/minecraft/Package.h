@@ -6,7 +6,7 @@
 #include <memory>
 #include "minecraft/Patch.h"
 #include "wonko/WonkoPackageVersion.h"
-#include "MMCError.h"
+#include "Exception.h"
 
 class Package;
 

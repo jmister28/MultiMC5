@@ -16,8 +16,7 @@
 #include "WonkoVersionList.h"
 
 #include "Env.h"
-#include "MMCJson.h"
-#include "MMCError.h"
+#include "Exception.h"
 #include "Json.h"
 
 #include "net/URLConstants.h"
@@ -27,10 +26,10 @@
 
 #include <pathutils.h>
 
-class ListLoadError : public MMCError
+class ListLoadError : public Exception
 {
 public:
-	ListLoadError(QString cause) : MMCError(cause)
+	ListLoadError(QString cause) : Exception(cause)
 	{
 	}
 };
@@ -74,7 +73,7 @@ protected slots:
 			const QJsonDocument doc = Json::ensureDocument(m_dl->getTargetFilepath());
 			m_list->loadListFromJSON(doc, WonkoVersionList::RemoteLoaded);
 		}
-		catch (MMCError &e)
+		catch (Exception &e)
 		{
 			emitFailed(e.cause());
 			return;
