@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "WonkoVersionList.h"
+#include "WonkoPackage.h"
 
 #include "Env.h"
 #include "Exception.h"
@@ -40,7 +40,7 @@ class CachedListLoadTask : public Task
 {
 	Q_OBJECT
 public:
-	explicit CachedListLoadTask(WonkoVersionList *vlist) : Task(), m_list(vlist)
+	explicit CachedListLoadTask(WonkoPackage *vlist) : Task(), m_list(vlist)
 	{
 	}
 
@@ -71,7 +71,7 @@ protected slots:
 		try
 		{
 			const QJsonDocument doc = Json::ensureDocument(m_dl->getTargetFilepath());
-			m_list->loadListFromJSON(doc, WonkoVersionList::RemoteLoaded);
+			m_list->loadListFromJSON(doc, WonkoPackage::RemoteLoaded);
 		}
 		catch (Exception &e)
 		{
@@ -84,7 +84,7 @@ protected slots:
 	}
 
 protected:
-	WonkoVersionList *m_list;
+	WonkoPackage *m_list;
 	NetJobPtr m_dlJob;
 	CacheDownloadPtr m_dl;
 };
@@ -94,7 +94,7 @@ class CachedVersionUpdateTask : public Task
 	Q_OBJECT
 
 public:
-	CachedVersionUpdateTask(WonkoVersionList *vlist, const QString &updatedVersion)
+	CachedVersionUpdateTask(WonkoPackage *vlist, const QString &updatedVersion)
 		: Task(), m_versionToUpdate(updatedVersion), m_list(vlist)
 	{
 	}
@@ -124,10 +124,10 @@ public:
 protected:
 	NetJobPtr m_dlJob;
 	QString m_versionToUpdate;
-	WonkoVersionList *m_list;
+	WonkoPackage *m_list;
 };
 
-WonkoVersionList::WonkoVersionList(const QString &baseUrl, const QString &uid, QObject *parent)
+WonkoPackage::WonkoPackage(const QString &baseUrl, const QString &uid, QObject *parent)
 	: BaseVersionList(parent), m_baseUrl(baseUrl), m_uid(uid)
 {
 	// stupid hack required because we use shared_from_this() in loadFromIndex, which is called
@@ -135,8 +135,8 @@ WonkoVersionList::WonkoVersionList(const QString &baseUrl, const QString &uid, Q
 	QMetaObject::invokeMethod(this, "initialLoad", Qt::QueuedConnection);
 }
 
-void WonkoVersionList::loadFromIndex(const QJsonObject &obj,
-									 const WonkoVersionList::LoadStatus source)
+void WonkoPackage::loadFromIndex(const QJsonObject &obj,
+									 const WonkoPackage::LoadStatus source)
 {
 	if (m_isFull)
 	{
@@ -149,17 +149,13 @@ void WonkoVersionList::loadFromIndex(const QJsonObject &obj,
 		throw ListLoadError("Invalid UID (expected " + m_uid + ", got " + uid + ")");
 	}
 
-	m_package = std::make_shared<WonkoPackageMetadata>();
-	m_package->uid = uid;
-	m_package->versionList = shared_from_this();
-
 	if (m_loaded < source)
 	{
 		m_loaded = source;
 	}
 }
 
-QString WonkoVersionList::versionFilePath(QString version) const
+QString WonkoPackage::versionFilePath(QString version) const
 {
 	if (m_lookup.contains(version))
 	{
@@ -170,7 +166,7 @@ QString WonkoVersionList::versionFilePath(QString version) const
 	return QString();
 }
 
-void WonkoVersionList::initialLoad()
+void WonkoPackage::initialLoad()
 {
 	auto entry = ENV.metacache()->resolveEntry("cache", QString("versions/%1.json").arg(m_uid));
 	if (!QFile::exists(entry->getFullPath()))
@@ -180,7 +176,7 @@ void WonkoVersionList::initialLoad()
 	try
 	{
 		loadListFromJSON(Json::ensureDocument(entry->getFullPath()),
-						 WonkoVersionList::LocalLoaded);
+						 WonkoPackage::LocalLoaded);
 	}
 	catch (Exception &e)
 	{
@@ -188,24 +184,24 @@ void WonkoVersionList::initialLoad()
 	}
 }
 
-Task *WonkoVersionList::getLoadTask()
+Task *WonkoPackage::getLoadTask()
 {
 	return new CachedListLoadTask(this);
 }
-bool WonkoVersionList::isLoaded()
+bool WonkoPackage::isLoaded()
 {
-	return m_loaded != WonkoVersionList::NotLoaded && m_isFull;
+	return m_loaded != WonkoPackage::NotLoaded && m_isFull;
 }
-const BaseVersionPtr WonkoVersionList::at(int i) const
+const BaseVersionPtr WonkoPackage::at(int i) const
 {
 	return m_vlist.at(i);
 }
-int WonkoVersionList::count() const
+int WonkoPackage::count() const
 {
 	return m_vlist.count();
 }
 
-void WonkoVersionList::loadListFromJSON(const QJsonDocument &jsonDoc, const LoadStatus source)
+void WonkoPackage::loadListFromJSON(const QJsonDocument &jsonDoc, const LoadStatus source)
 {
 	qDebug() << "Loading version list.";
 
@@ -238,7 +234,7 @@ void WonkoVersionList::loadListFromJSON(const QJsonDocument &jsonDoc, const Load
 	}
 }
 
-void WonkoVersionList::sortInternal()
+void WonkoPackage::sortInternal()
 {
 	auto cmpF = [](BaseVersionPtr first, BaseVersionPtr second)
 	{
@@ -248,14 +244,14 @@ void WonkoVersionList::sortInternal()
 	};
 	std::sort(m_vlist.begin(), m_vlist.end(), cmpF);
 }
-void WonkoVersionList::sort()
+void WonkoPackage::sort()
 {
 	beginResetModel();
 	sortInternal();
 	endResetModel();
 }
 
-BaseVersionPtr WonkoVersionList::getLatestStable() const
+BaseVersionPtr WonkoPackage::getLatestStable() const
 {
 	if (m_lookup.contains(m_latestReleaseID))
 	{
@@ -264,7 +260,7 @@ BaseVersionPtr WonkoVersionList::getLatestStable() const
 	return BaseVersionPtr();
 }
 
-void WonkoVersionList::reindex()
+void WonkoPackage::reindex()
 {
 	m_lookup.clear();
 	for (auto &version : m_vlist)
@@ -273,7 +269,7 @@ void WonkoVersionList::reindex()
 	}
 }
 
-void WonkoVersionList::updateListData(QList<BaseVersionPtr> versions)
+void WonkoPackage::updateListData(QList<BaseVersionPtr> versions)
 {
 	beginResetModel();
 	m_vlist = versions;
@@ -282,9 +278,9 @@ void WonkoVersionList::updateListData(QList<BaseVersionPtr> versions)
 	endResetModel();
 }
 
-std::shared_ptr<Task> WonkoVersionList::createUpdateTask(const QString &version)
+std::shared_ptr<Task> WonkoPackage::createUpdateTask(const QString &version)
 {
 	return std::make_shared<CachedVersionUpdateTask>(this, version);
 }
 
-#include "WonkoVersionList.moc"
+#include "WonkoPackage.moc"

@@ -23,27 +23,14 @@
 #include "tasks/Task.h"
 #include "net/NetJob.h"
 
-class FileStore;
 class CachedListLoadTask;
 class CachedVersionUpdateTask;
-
-struct WonkoPackageMetadata
-{
-	QString uid;
-
-	std::shared_ptr<class WonkoVersionList> versions()
-	{
-		return versionList.lock();
-	}
-	std::weak_ptr<class WonkoVersionList> versionList;
-};
-using WonkoPackageMetadataPtr = std::shared_ptr<WonkoPackageMetadata>;
 
 /** The versions list also represents a package (since a package is basically a list of
  * versions, with some extra metadata attached)
  */
-class WonkoVersionList : public BaseVersionList,
-						 public std::enable_shared_from_this<WonkoVersionList>
+class WonkoPackage : public BaseVersionList,
+						 public std::enable_shared_from_this<WonkoPackage>
 {
 	Q_OBJECT
 public:
@@ -61,7 +48,7 @@ private:
 	void reindex();		 //< Rebuilds the m_lookup table
 
 public:
-	explicit WonkoVersionList(const QString &baseUrl, const QString &uid,
+	explicit WonkoPackage(const QString &baseUrl, const QString &uid,
 							  QObject *parent = nullptr);
 
 	void loadFromIndex(const QJsonObject &obj, const LoadStatus source);
@@ -76,10 +63,6 @@ public:
 
 	BaseVersionPtr getLatestStable() const override;
 
-	WonkoPackageMetadataPtr package() const
-	{
-		return m_package;
-	}
 	QString uid() const
 	{
 		return m_uid;
@@ -104,7 +87,6 @@ protected:
 	LoadStatus m_loaded = NotLoaded;
 	bool m_isFull = false;
 
-	WonkoPackageMetadataPtr m_package;
 	QString m_latestReleaseID = "INVALID";
 	QString m_latestSnapshotID = "INVALID";
 	QString m_baseUrl;

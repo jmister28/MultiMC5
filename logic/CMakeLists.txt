@@ -43,8 +43,8 @@ SET(LOGIC_SOURCES
 	wonko/BaseResource.cpp
 	wonko/DownloadableResource.cpp
 	wonko/DownloadableResource.h
-	wonko/WonkoVersionList.h
-	wonko/WonkoVersionList.cpp
+	wonko/WonkoPackage.h
+	wonko/WonkoPackage.cpp
 	wonko/WonkoPackageVersion.h
 	wonko/WonkoPackageVersion.cpp
 	wonko/Rules.h

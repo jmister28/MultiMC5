@@ -9,7 +9,7 @@
 
 class QFile;
 class LWJGLVersionList;
-class WonkoVersionList;
+class WonkoPackage;
 class HttpMetaCache;
 class SettingsObject;
 class InstanceList;
