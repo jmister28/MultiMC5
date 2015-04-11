@@ -86,11 +86,11 @@ public:
 	}
 	QString indexUrl() const
 	{
-		return QString("%1/%2.json").arg(m_baseUrl).arg(m_uid);
+		return m_baseUrl + QString("%1.json").arg(m_uid);
 	}
 	QString fileUrl(QString id) const
 	{
-		return QString("%1/%2/%3.json").arg(m_baseUrl).arg(m_uid).arg(id);
+		return m_baseUrl + QString("%1/%2.json").arg(m_uid).arg(id);
 	}
 	QString versionFilePath(QString version) const;
 
