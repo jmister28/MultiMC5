@@ -40,6 +40,8 @@ public:
 	 */
 	virtual QString failReason() const;
 
+	virtual bool  canAbort() const { return false; }
+
 public
 slots:
 	virtual void start();

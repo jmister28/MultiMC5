@@ -15,30 +15,30 @@
 
 #pragma once
 
-#include <QObject>
+#include "auth/yggdrasil/YggdrasilTask.h"
 
-class ProgressProvider : public QObject
+#include <QObject>
+#include <QString>
+#include <QJsonObject>
+
+/**
+ * The authenticate task takes a MojangAccount with a possibly timed-out access token
+ * and attempts to authenticate with Mojang's servers.
+ * If successful, it will set the new access token. The token is considered validated.
+ */
+class RefreshTask : public YggdrasilTask
 {
 	Q_OBJECT
-protected:
-	explicit ProgressProvider(QObject *parent = 0) : QObject(parent)
-	{
-		connect(this, &ProgressProvider::succeeded, this, &ProgressProvider::finished);
-		connect(this, &ProgressProvider::failed, this, &ProgressProvider::finished);
-	}
-signals:
-	void started();
-	void progress(qint64 current, qint64 total);
-	void succeeded();
-	void failed(QString reason);
-	void status(QString status);
-	void finished();
-
 public:
-	virtual ~ProgressProvider() {}
-	virtual bool isRunning() const = 0;
-public
-slots:
-	virtual void start() = 0;
-	virtual void abort() = 0;
+	RefreshTask(AuthSessionPtr session, MojangAccount * account);
+
+protected:
+	virtual QJsonObject getRequestContent() const override;
+
+	virtual QString getEndpoint() const override;
+
+	virtual void processResponse(QJsonObject responseData) override;
+
+	virtual QString getStateMessage() const override;
 };
+

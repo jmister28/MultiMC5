@@ -1,6 +1,6 @@
 project(MultiMC-Logic)
 
-SET(LOGIC_SOURCES
+set(LOGIC_SOURCES
 	# LOGIC - Base classes and infrastructure
 	BaseVersionList.h
 	BaseVersionList.cpp
@@ -28,6 +28,17 @@ SET(LOGIC_SOURCES
 	Env.cpp
 
 	# JSON parsing helpers
+
+	# Various utility classes
+	BaseConfigObject.h
+	BaseConfigObject.cpp
+	AbstractCommonModel.h
+	AbstractCommonModel.cpp
+	Json.h
+	Json.cpp
+	Exception.h
+	FileSystem.h
+	FileSystem.cpp
 
 	# RW lock protected map
 	RWStorage.h
@@ -70,20 +81,39 @@ SET(LOGIC_SOURCES
 	net/URLConstants.cpp
 
 	# Yggdrasil login stuff
-	auth/AuthSession.h
-	auth/AuthSession.cpp
-	auth/MojangAccountList.h
-	auth/MojangAccountList.cpp
-	auth/MojangAccount.h
-	auth/MojangAccount.cpp
-	auth/YggdrasilTask.h
-	auth/YggdrasilTask.cpp
-	auth/flows/AuthenticateTask.h
-	auth/flows/AuthenticateTask.cpp
-	auth/flows/RefreshTask.cpp
-	auth/flows/RefreshTask.cpp
-	auth/flows/ValidateTask.h
-	auth/flows/ValidateTask.cpp
+	auth/yggdrasil/AuthSession.h
+	auth/yggdrasil/AuthSession.cpp
+	auth/yggdrasil/MojangAccountList.h
+	auth/yggdrasil/MojangAccountList.cpp
+	auth/yggdrasil/MojangAccount.h
+	auth/yggdrasil/MojangAccount.cpp
+	auth/yggdrasil/YggdrasilTask.h
+	auth/yggdrasil/YggdrasilTask.cpp
+	auth/yggdrasil/flows/AuthenticateTask.h
+	auth/yggdrasil/flows/AuthenticateTask.cpp
+	auth/yggdrasil/flows/RefreshTask.cpp
+	auth/yggdrasil/flows/RefreshTask.cpp
+	auth/yggdrasil/flows/ValidateTask.h
+	auth/yggdrasil/flows/ValidateTask.cpp
+
+	# Accounts stuff
+	auth/AccountModel.h
+	auth/AccountModel.cpp
+	auth/BaseAccount.h
+	auth/BaseAccount.cpp
+	auth/BaseSession.h
+	auth/BaseSession.cpp
+	auth/BaseAccountType.h
+
+	# Imgur accounts
+	#auth/imgur/ImgurAccount.h
+	#auth/imgur/ImgurAccount.cpp
+	#auth/imgur/ImgurAuthTask.h
+	#auth/imgur/ImgurAuthTask.cpp
+
+	# Minecraft accounts
+	auth/minecraft/MinecraftAuthTask.h
+	auth/minecraft/MinecraftAuthTask.cpp
 
 	# Update system
 	updater/GoUpdate.h
@@ -198,6 +228,12 @@ SET(LOGIC_SOURCES
 	tasks/ThreadTask.cpp
 	tasks/SequentialTask.h
 	tasks/SequentialTask.cpp
+	tasks/StandardTask.h
+	tasks/StandardTask.cpp
+	tasks/MoveFileTask.h
+	tasks/MoveFileTask.cpp
+	tasks/CopyFileTask.h
+	tasks/CopyFileTask.cpp
 
 	# Settings
 	settings/INIFile.cpp
@@ -249,3 +285,5 @@ target_link_libraries(MultiMC_logic iconfix libUtil LogicalGui ${QUAZIP_LIBRARIE
 		${MultiMC_LINK_ADDITIONAL_LIBS})
 
 add_dependencies(MultiMC_logic QuaZIP)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})

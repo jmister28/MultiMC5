@@ -13,32 +13,35 @@
  * limitations under the License.
  */
 
+/*
+ * :FIXME: DEAD CODE, DEAD CODE, DEAD CODE! :FIXME:
+ */
+
 #pragma once
 
-#include <QObject>
+#include "auth/yggdrasil/YggdrasilTask.h"
 
-class ProgressProvider : public QObject
+#include <QObject>
+#include <QString>
+#include <QJsonObject>
+
+/**
+ * The validate task takes a MojangAccount and checks to make sure its access token is valid.
+ */
+class ValidateTask : public YggdrasilTask
 {
 	Q_OBJECT
-protected:
-	explicit ProgressProvider(QObject *parent = 0) : QObject(parent)
-	{
-		connect(this, &ProgressProvider::succeeded, this, &ProgressProvider::finished);
-		connect(this, &ProgressProvider::failed, this, &ProgressProvider::finished);
-	}
-signals:
-	void started();
-	void progress(qint64 current, qint64 total);
-	void succeeded();
-	void failed(QString reason);
-	void status(QString status);
-	void finished();
-
 public:
-	virtual ~ProgressProvider() {}
-	virtual bool isRunning() const = 0;
-public
-slots:
-	virtual void start() = 0;
-	virtual void abort() = 0;
+	ValidateTask(AuthSessionPtr session, MojangAccount *account, QObject *parent = 0);
+
+protected:
+	virtual QJsonObject getRequestContent() const override;
+
+	virtual QString getEndpoint() const override;
+
+	virtual void processResponse(QJsonObject responseData) override;
+
+	virtual QString getStateMessage() const override;
+
+private:
 };
