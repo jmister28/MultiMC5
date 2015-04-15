@@ -736,7 +736,7 @@ void MainWindow::repopulateAccountsMenu()
 				for (auto profile : mojangAccount->profiles())
 				{
 					QAction *action = new QAction(profile.name, this);
-					action->setData(account->username());
+					action->setData(qVariantFromValue(account));
 					action->setCheckable(true);
 					if (mojangAccount->currentProfile().id == profile.id && MMC->accountsModel()->get(account->type()) == account)
 					{
