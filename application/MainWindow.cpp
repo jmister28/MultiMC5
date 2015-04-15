@@ -770,7 +770,7 @@ void MainWindow::latestAccountChanged()
 	repopulateAccountsMenu();
 
 	BaseAccount *account = MMC->accountsModel()->latest();
-	if (account)
+	if (account && !account->avatar().isEmpty())
 	{
 		Resource::create(account->avatar())->applyTo(accountMenuButton)->placeholder(Resource::create("icon:hourglass"));
 	}
