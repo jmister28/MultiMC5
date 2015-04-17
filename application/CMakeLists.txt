@@ -146,8 +146,6 @@ SET(MULTIMC_SOURCES
 	ColumnResizer.cpp
 	InstanceProxyModel.h
 	InstanceProxyModel.cpp
-	AuthTask.h
-	AuthTask.cpp
 
 	# GUI - windows
 	MainWindow.h
