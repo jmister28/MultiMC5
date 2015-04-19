@@ -22,6 +22,11 @@ SET(LOGIC_SOURCES
 	FileSystem.h
 	FileSystem.cpp
 	Functional.h
+	MMCStrings.h
+	MMCStrings.cpp
+
+	# Prefix tree where node names are strings between separators
+	SeparatorPrefixTree.h
 
 	# WARNING: globals live here
 	Env.h

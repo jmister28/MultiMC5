@@ -60,6 +60,8 @@ VersionPage::VersionPage(OneSixInstance *inst, QWidget *parent)
 	ui->setupUi(this);
 	ui->tabWidget->tabBar()->hide();
 
+	reloadMinecraftProfile();
+
 	m_version = m_inst->getMinecraftProfile();
 	if (m_version)
 	{
@@ -117,7 +119,7 @@ bool VersionPage::reloadMinecraftProfile()
 	{
 		QMessageBox::critical(
 			this, tr("Error"),
-			tr("Failed to load the version description file for reasons unknown."));
+			tr("Couldn't load the instance profile."));
 		return false;
 	}
 }
