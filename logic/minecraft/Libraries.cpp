@@ -1,8 +1,11 @@
 #include "Libraries.h"
-#include <minecraft/VersionBuildError.h>
-#include <tasks/Task.h>
-#include <net/NetJob.h>
+
 #include <modutils.h>
+
+#include "minecraft/VersionBuildError.h"
+#include "tasks/Task.h"
+#include "net/NetJob.h"
+
 #include "Env.h"
 #include "minecraft/Mod.h"
 #include "Functional.h"
@@ -46,6 +49,11 @@ QList<LibraryPtr> Libraries::getActiveLibs() const
 		}
 	}
 	return out;
+}
+
+Libraries::Libraries(const QList<LibraryPtr> &libraries)
+	: DownloadableResource(Functional::map(&std::dynamic_pointer_cast<BaseDownload, Library>, libraries))
+{
 }
 
 void Libraries::applyTo(const ResourcePtr &target) const
@@ -176,12 +184,6 @@ void Libraries::applyTo(const ResourcePtr &target) const
 	}
 }
 
-void Libraries::load(const QJsonValue &data)
-{
-	DownloadableResource::load(data);
-	addLibs = Functional::map(&std::dynamic_pointer_cast<Library, BaseDownload>, downloads());
-}
-
 class JarlibUpdate : public Task
 {
 	Q_OBJECT
@@ -261,15 +263,32 @@ private:
 	const Libraries *m_libs;
 };
 
-DownloadPtr Libraries::createDownload() const
-{
-	return std::make_shared<Library>();
-}
-
 Task *Libraries::updateTask() const
 {
 	return new JarlibUpdate(this);
 }
+
+ResourcePtr LibrariesFactory::create(const int formatVersion, const QString &key, const QJsonValue &data) const
+{
+	QList<LibraryPtr> downloads;
+	for (const QJsonObject &obj : Json::ensureIsArrayOf<QJsonObject>(data))
+	{
+		downloads.append(std::dynamic_pointer_cast<Library>(createDownload(obj)));
+	}
+	std::shared_ptr<Libraries> libs = std::make_shared<Libraries>(downloads);
+	libs->addLibs = downloads;
+	return libs;
+}
+DownloadPtr LibrariesFactory::createDownload(const QJsonObject &obj) const
+{
+	using namespace Json;
+	LibraryPtr lib = std::make_shared<Library>(QUrl(), ensureInteger(obj, "size"), ensureByteArray(obj, "sha256"));
+	lib->m_name = GradleSpecifier(ensureString(obj, "name"));
+	lib->m_base_url = ensureUrl(obj, "mavenBaseUrl", QUrl());
+	lib->m_absolute_url = ensureUrl(obj, "url", lib->url());
+	return lib;
+}
+
 }
 
 #include "Libraries.moc"

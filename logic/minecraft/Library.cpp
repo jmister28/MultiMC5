@@ -193,11 +193,3 @@ bool Library::storagePathIsDefault() const
 {
 	return m_storagePrefix.isEmpty();
 }
-
-void Library::load(const QJsonObject &data)
-{
-	BaseDownload::load(data);
-	m_absolute_url = BaseDownload::url();
-	m_base_url = Json::ensureUrl(data, "mavenBaseUrl", QUrl());
-	m_name = GradleSpecifier(Json::ensureString(data, "name"));
-}

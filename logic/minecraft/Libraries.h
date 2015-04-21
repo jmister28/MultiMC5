@@ -11,9 +11,9 @@ namespace Minecraft
 class Libraries : public DownloadableResource
 {
 public:
+	explicit Libraries(const QList<LibraryPtr> &libraries = {});
+
 	void applyTo(const ResourcePtr &target) const override;
-	void load(const QJsonValue &data) override;
-	DownloadPtr createDownload() const override;
 	Task *updateTask() const override;
 
 	void clear()
@@ -31,5 +31,13 @@ public:
 	QList<LibraryPtr> overwriteLibs;
 	QList<LibraryPtr> addLibs;
 	QList<QString> removeLibs;
+};
+class LibrariesFactory : public DownloadableResourceFactory
+{
+public:
+	explicit LibrariesFactory(const int version, const QString &key) : DownloadableResourceFactory(version, key) {}
+
+	ResourcePtr create(const int formatVersion, const QString &key, const QJsonValue &data) const override;
+	DownloadPtr createDownload(const QJsonObject &obj) const override;
 };
 }

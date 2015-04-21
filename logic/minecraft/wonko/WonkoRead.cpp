@@ -170,9 +170,9 @@ PackagePtr WonkoFormat::fromJson(const QJsonDocument &doc, const QString &filena
 			result->resources.appletClass =
 				file->resource<StringResource>("mc.appletClass")->data();
 		}
-		if (file->resource<StringResource>("mc.assets"))
+		if (auto assets = file->resource<Minecraft::Assets>("mc.assets"))
 		{
-			result->resources.assets = std::make_shared<Minecraft::Assets>(file->resource<StringResource>("mc.assets")->data());
+			result->resources.assets = assets;
 		}
 		if (file->resource<StringResource>("mc.arguments"))
 		{

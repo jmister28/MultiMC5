@@ -20,6 +20,8 @@ using LibraryPtr = std::shared_ptr<class Library>;
 class Library : public BaseDownload
 {
 public:
+	using BaseDownload::BaseDownload;
+	explicit Library() : BaseDownload(QUrl(), 0, QByteArray()) {}
 	virtual ~Library()
 	{
 	}
@@ -154,6 +156,5 @@ public: /* data */
 	// BaseDownload interface
 public:
 	QUrl url() const override;
-	void load(const QJsonObject &data) override;
 	QList<NetActionPtr> createNetActions() const override;
 };

@@ -24,17 +24,9 @@ public:
 			other->m_id = m_id;
 		}
 	}
-	void load(const QJsonValue &data) override;
 	void clear() override
 	{
 		m_id.clear();
-	}
-	void apply(QString &value)
-	{
-		if (!value.isNull())
-		{
-			m_id = value;
-		}
 	}
 	void finalize()
 	{
@@ -60,5 +52,12 @@ public:
 
 private:
 	QString m_id;
+};
+class AssetsFactory : public BaseResourceFactory
+{
+public:
+	bool supportsFormatVersion(const int version) const override { return version == 1; }
+	QStringList keys(const int formatVersion) const override { return {"mc.assets"}; }
+	ResourcePtr create(const int formatVersion, const QString &key, const QJsonValue &data) const override;
 };
 }

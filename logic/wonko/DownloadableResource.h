@@ -11,6 +11,8 @@ using DownloadPtr = std::shared_ptr<class BaseDownload>;
 class BaseDownload
 {
 public:
+	explicit BaseDownload(const QUrl &url, const int size, const QByteArray &hash)
+		: m_url(url), m_size(size), m_hash(hash) {}
 	virtual ~BaseDownload()
 	{
 	}
@@ -28,7 +30,6 @@ public:
 		return m_hash;
 	}
 
-	virtual void load(const QJsonObject &data);
 	virtual QList<NetActionPtr> createNetActions() const;
 
 private:
@@ -40,15 +41,12 @@ private:
 class DownloadableResource : public BaseResource
 {
 public:
+	explicit DownloadableResource(const QList<DownloadPtr> &downloads)
+		: m_downloads(downloads) {}
 	virtual ~DownloadableResource()
 	{
 	}
 
-	virtual DownloadPtr createDownload() const
-	{
-		return std::make_shared<BaseDownload>();
-	}
-	virtual void load(const QJsonValue &data) override;
 	virtual Task *updateTask() const override;
 	virtual void applyTo(const ResourcePtr &target) const override;
 
@@ -59,4 +57,12 @@ public:
 
 private:
 	QList<DownloadPtr> m_downloads;
+};
+class DownloadableResourceFactory : public StandardResourceFactory
+{
+public:
+	explicit DownloadableResourceFactory(const int version, const QString &key) : StandardResourceFactory(version, key) {}
+
+	ResourcePtr create(const int formatVersion, const QString &key, const QJsonValue &data) const override;
+	virtual DownloadPtr createDownload(const QJsonObject &obj) const;
 };

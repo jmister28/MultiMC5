@@ -5,6 +5,8 @@
 #include <QStringList>
 #include <QMap>
 
+#include "Json.h"
+
 class QJsonValue;
 class Task;
 using ResourcePtr = std::shared_ptr<class BaseResource>;
@@ -17,7 +19,6 @@ public:
 	}
 
 	virtual void clear() {}
-	virtual void load(const QJsonValue &data) = 0;
 	virtual Task *updateTask() const
 	{
 		return nullptr;
@@ -35,7 +36,7 @@ public:
 class StringResource : public BaseResource
 {
 public:
-	void load(const QJsonValue &data) override;
+	explicit StringResource(const QString &data) : m_data(data) {}
 	QString data() const
 	{
 		return m_data;
@@ -51,7 +52,7 @@ private:
 class StringListResource : public BaseResource
 {
 public:
-	void load(const QJsonValue &data) override;
+	explicit StringListResource(const QStringList &data) : m_data(data) {}
 	QStringList data() const
 	{
 		return m_data;
@@ -68,7 +69,7 @@ private:
 class FoldersResource : public BaseResource
 {
 public:
-	void load(const QJsonValue &data) override;
+	explicit FoldersResource(const QMap<QString, QStringList> &folders) : m_folders(folders) {}
 
 	QStringList folderPaths() const
 	{
@@ -86,4 +87,49 @@ public:
 
 private:
 	QMap<QString, QStringList> m_folders;
+};
+
+class BaseResourceFactory
+{
+public:
+	virtual ~BaseResourceFactory() {}
+
+	virtual bool supportsFormatVersion(const int version) const = 0;
+	virtual QStringList keys(const int formatVersion) const = 0;
+	virtual ResourcePtr create(const int formatVersion, const QString &key, const QJsonValue &data) const = 0;
+};
+class StandardResourceFactory : public BaseResourceFactory
+{
+protected:
+	const int m_version;
+	const QString m_key;
+
+	explicit StandardResourceFactory(const int version, const QString &key)
+		: m_version(version), m_key(key) {}
+
+public:
+	bool supportsFormatVersion(const int version) const override { return m_version == version; }
+	QStringList keys(const int formatVersion) const override { return {m_key}; }
+};
+
+class StringResourceFactory : public StandardResourceFactory
+{
+public:
+	explicit StringResourceFactory(const int version, const QString &key) : StandardResourceFactory(version, key) {}
+
+	ResourcePtr create(const int formatVersion, const QString &key, const QJsonValue &data) const override;
+};
+class StringListResourceFactory : public StandardResourceFactory
+{
+public:
+	explicit StringListResourceFactory(const int version, const QString &key) : StandardResourceFactory(version, key) {}
+
+	ResourcePtr create(const int formatVersion, const QString &key, const QJsonValue &data) const override;
+};
+class FoldersResourceFactory : public BaseResourceFactory
+{
+public:
+	bool supportsFormatVersion(const int version) const override { return 0 == version; }
+	QStringList keys(const int formatVersion) const override { return {"general.folders"}; }
+	ResourcePtr create(const int formatVersion, const QString &key, const QJsonValue &data) const override;
 };

@@ -2,12 +2,15 @@
 
 #include "wonko/DownloadableResource.h"
 #include "minecraft/Libraries.h"
+#include "minecraft/Assets.h"
 #include "Json.h"
 #include "Rules.h"
 
 void WonkoPackageVersion::load(const QJsonObject &obj, const QString &uid)
 {
 	using namespace Json;
+
+	const int formatVersion = ensureInteger(obj, "formatVersion", 0);
 
 	//////////////// METADATA ////////////////////////
 
@@ -28,18 +31,28 @@ void WonkoPackageVersion::load(const QJsonObject &obj, const QString &uid)
 
 	//////////////// ACTUAL DATA ///////////////////////
 
-#define FACTORY_FOR(CLAZZ) [] { return std::make_shared<CLAZZ>(); }
+#define FACTORY(CLAZZ, ...) std::make_shared<CLAZZ>(__VA_ARGS__)
 
-	QMap<QString, std::function<ResourcePtr()>> resourceFactories;
-	resourceFactories["general.traits"] = FACTORY_FOR(StringListResource);
-	resourceFactories["general.folders"] = FACTORY_FOR(FoldersResource);
-	resourceFactories["java.libraries"] = FACTORY_FOR(Minecraft::Libraries);
-	resourceFactories["java.natives"] = FACTORY_FOR(Minecraft::Libraries);
-	resourceFactories["java.mainClass"] = FACTORY_FOR(StringResource);
-	resourceFactories["mc.appletClass"] = FACTORY_FOR(StringResource);
-	resourceFactories["mc.assets"] = FACTORY_FOR(StringResource);
-	resourceFactories["mc.arguments"] = FACTORY_FOR(StringResource);
-	resourceFactories["mc.tweakers"] = FACTORY_FOR(StringListResource);
+	QList<std::shared_ptr<BaseResourceFactory>> factories;
+	factories << FACTORY(StringListResourceFactory, 0, "general.traits")
+			  << FACTORY(FoldersResourceFactory)
+			  << FACTORY(Minecraft::LibrariesFactory, 0, "java.libraries")
+			  << FACTORY(Minecraft::LibrariesFactory, 0, "java.natives")
+			  << FACTORY(StringResourceFactory, 0, "java.mainClass")
+			  << FACTORY(StringResourceFactory, 0, "mc.appletClass")
+			  << FACTORY(Minecraft::AssetsFactory)
+			  << FACTORY(StringResourceFactory, 0, "mc.arguments")
+			  << FACTORY(StringResourceFactory, 0, "mc.tweakers");
+
+	// sort the factories for easier access
+	QMap<QString, QList<std::shared_ptr<BaseResourceFactory>>> resourceFactories;
+	for (auto factory : factories)
+	{
+		for (const QString &key : factory->keys(formatVersion))
+		{
+			resourceFactories[key].append(factory);
+		}
+	}
 
 	if (obj.contains("data"))
 	{
@@ -60,22 +73,26 @@ void WonkoPackageVersion::load(const QJsonObject &obj, const QString &uid)
 		}
 
 		QMap<QString, ResourcePtr> result;
-		auto loadGroup = [&result, resourceFactories](const QJsonObject &resources)
+		auto loadGroup = [&result, resourceFactories, formatVersion](const QJsonObject &resources)
 		{
-			qDebug() << resources;
 			for (const QString &key : resources.keys())
 			{
 				if (resourceFactories.contains(key))
 				{
-					ResourcePtr ptr = resourceFactories[key]();
-					ptr->load(ensureJsonValue(resources, key));
-					if (result.contains(key))
+					for (auto factory : resourceFactories[key])
 					{
-						ptr->applyTo(result.value(key));
-					}
-					else
-					{
-						result.insert(key, ptr);
+						if (factory->supportsFormatVersion(formatVersion))
+						{
+							ResourcePtr ptr = factory->create(formatVersion, key, ensureJsonValue(resources, key));
+							if (result.contains(key))
+							{
+								ptr->applyTo(result[key]);
+							}
+							else
+							{
+								result.insert(key, ptr);
+							}
+						}
 					}
 				}
 			}

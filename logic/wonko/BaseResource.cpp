@@ -2,23 +2,26 @@
 
 #include "Json.h"
 
-void StringResource::load(const QJsonValue &data)
+ResourcePtr StringResourceFactory::create(const int formatVersion, const QString &key, const QJsonValue &data) const
 {
-	m_data = Json::ensureString(data);
+	Q_ASSERT(formatVersion == m_version);
+	Q_ASSERT(key == m_key);
+	return std::make_shared<StringResource>(Json::ensureString(data));
+}
+ResourcePtr StringListResourceFactory::create(const int formatVersion, const QString &key, const QJsonValue &data) const
+{
+	Q_ASSERT(formatVersion == m_version);
+	Q_ASSERT(key == m_key);
+	return std::make_shared<StringListResource>(Json::ensureIsArrayOf<QString>(data));
 }
 
-void StringListResource::load(const QJsonValue &data)
+ResourcePtr FoldersResourceFactory::create(const int formatVersion, const QString &key, const QJsonValue &data) const
 {
-	m_data = Json::ensureIsArrayOf<QString>(data);
-}
-
-void FoldersResource::load(const QJsonValue &data)
-{
-	using namespace Json;
-
-	const QJsonObject obj = ensureObject(data);
+	QMap<QString, QStringList> folders;
+	const QJsonObject obj = Json::ensureObject(data);
 	for (const QString &key : obj.keys())
 	{
-		m_folders[key] = ensureIsArrayOf<QString>(obj, key);
+		folders[key] = Json::ensureIsArrayOf<QString>(obj, key);
 	}
+	return std::make_shared<FoldersResource>(folders);
 }

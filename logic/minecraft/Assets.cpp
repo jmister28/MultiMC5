@@ -305,9 +305,9 @@ QString Assets::storageFolder()
 	return reconstructAssets(id()).absolutePath();
 }
 
-void Assets::load(const QJsonValue &data)
+ResourcePtr AssetsFactory::create(const int formatVersion, const QString &key, const QJsonValue &data) const
 {
-	m_id = Json::ensureString(data);
+	return std::make_shared<Assets>(Json::ensureString(data));
 }
 
 #include "Assets.moc"
