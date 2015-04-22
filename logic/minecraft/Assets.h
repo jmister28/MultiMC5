@@ -56,7 +56,7 @@ private:
 class AssetsFactory : public BaseResourceFactory
 {
 public:
-	bool supportsFormatVersion(const int version) const override { return version == 1; }
+	bool supportsFormatVersion(const int version) const override { return version == 0; }
 	QStringList keys(const int formatVersion) const override { return {"mc.assets"}; }
 	ResourcePtr create(const int formatVersion, const QString &key, const QJsonValue &data) const override;
 };

@@ -77,6 +77,7 @@ void WonkoPackageVersion::load(const QJsonObject &obj, const QString &uid)
 		{
 			for (const QString &key : resources.keys())
 			{
+				bool factoryFound = false;
 				if (resourceFactories.contains(key))
 				{
 					for (auto factory : resourceFactories[key])
@@ -92,8 +93,14 @@ void WonkoPackageVersion::load(const QJsonObject &obj, const QString &uid)
 							{
 								result.insert(key, ptr);
 							}
+							factoryFound = true;
+							break;
 						}
 					}
+				}
+				if (!factoryFound)
+				{
+					qWarning() << "No factory found for" << key << "version" << formatVersion;
 				}
 			}
 		};
