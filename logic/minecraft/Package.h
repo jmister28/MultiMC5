@@ -64,7 +64,7 @@ private:
 	 *    some sort of hidden mixin?
 	 *       OneSix-specific subclass that adds this?
 	 */
-	int order = 0;
+	int order = -1;
 	/*
 	 * FIXME: replace with a generic 'source'.
 	 * Sources should do reference counting and self-destruct when they reach zero.

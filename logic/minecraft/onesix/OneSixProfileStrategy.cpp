@@ -65,141 +65,176 @@ void OneSixProfileStrategy::upgradeDeprecatedFiles()
 	}
 }
 
-void OneSixProfileStrategy::loadBuiltinPatch(QString uid, QString name, QString version)
+void OneSixProfileStrategy::loadBuiltinPatch(QString uid, QString version)
 {
-	auto mcJson =
-		PathCombine(m_instance->instanceRoot(), "patches", QString("%1.json").arg(uid));
-	// load up the base minecraft patch
-	PackagePtr minecraftPatch;
-	if (QFile::exists(mcJson))
+	auto mc = std::dynamic_pointer_cast<WonkoPackage>(ENV.getVersionList(uid));
+	auto path = mc->versionFilePath(version);
+	if (!QFile::exists(path))
 	{
-		auto file = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
-		file->fileId = uid;
-		file->name = name;
-		if (file->version.isEmpty())
-		{
-			file->version = QObject::tr("Custom");
-		}
-		minecraftPatch = file;
+		throw VersionIncomplete(uid);
 	}
-	else if (!version.isEmpty())
+	QFile file(path);
+	if (!file.open(QFile::ReadOnly))
 	{
-		auto mc = std::dynamic_pointer_cast<WonkoPackage>(ENV.getVersionList(uid));
-		auto path = mc->versionFilePath(version);
-		if (!QFile::exists(path))
-		{
-			throw VersionIncomplete(uid);
-		}
-		QFile file(path);
-		if (!file.open(QFile::ReadOnly))
-		{
-			throw Json::JsonException(QObject::tr("Unable to open the version file %1: %2.")
-										  .arg(file.fileName(), file.errorString()));
-		}
-		QJsonParseError error;
-		QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
-		if (error.error != QJsonParseError::NoError)
-		{
-			throw Json::JsonException(
-				QObject::tr("Unable to process the version file %1: %2 at %3.")
-					.arg(file.fileName(), error.errorString())
-					.arg(error.offset));
-		}
-		minecraftPatch = WonkoFormat::fromJson(doc, file.fileName());
+		throw Json::JsonException(QObject::tr("Unable to open the version file %1: %2.")
+									.arg(file.fileName(), file.errorString()));
 	}
-	if (minecraftPatch)
-		profile->appendPatch(minecraftPatch);
+	QJsonParseError error;
+	QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
+	if (error.error != QJsonParseError::NoError)
+	{
+		throw Json::JsonException(
+			QObject::tr("Unable to process the version file %1: %2 at %3.")
+				.arg(file.fileName(), error.errorString())
+				.arg(error.offset));
+	}
+	auto minecraftPatch = WonkoFormat::fromJson(doc, file.fileName());
+	profile->appendPatch(minecraftPatch);
 }
 
-void OneSixProfileStrategy::loadDefaultBuiltinPatches()
+void OneSixProfileStrategy::load()
 {
-	loadBuiltinPatch("net.minecraft", "Minecraft", m_instance->minecraftVersion());
-	loadBuiltinPatch("org.lwjgl", "LWJGL", m_instance->lwjglVersion());
-	loadBuiltinPatch("net.minecraftforge", "Forge", m_instance->forgeVersion());
-	loadBuiltinPatch("com.mumfrey.liteloader", "LiteLoader", m_instance->liteloaderVersion());
-}
+	// upgrade old patch files, if any
+	upgradeDeprecatedFiles();
 
-void OneSixProfileStrategy::loadUserPatches()
-{
+	struct PatchItem
+	{
+		QString uid;
+		QString version;
+	};
+	struct
+	{
+		bool insert(PatchItem item, const char * reason = 0)
+		{
+			if(seen(item.uid))
+			{
+				qCritical() << "Already seen" << item.uid << "version" << item.version << (reason ?(QString("reason %1").arg(reason)): "for no reason");
+				return false;
+			}
+			qDebug() << "Adding" << item.uid << "version" << item.version << (reason ?(QString("reason %1").arg(reason)): "for no reason");
+			loadOrder.append(item);
+			index[item.uid] = &loadOrder.last();
+			return false;
+		}
+		bool seen(QString uid)
+		{
+			return index.contains(uid);
+		}
+		QList <PatchItem> loadOrder;
+		QMap <QString, PatchItem *> index;
+	} loadOrder;
+	loadOrder.insert({"net.minecraft", m_instance->minecraftVersion()}, "hardcoded");
+	loadOrder.insert({"org.lwjgl", m_instance->lwjglVersion()}, "hardcoded");
+
 	// load all patches, put into map for ordering, apply in the right order
 	ProfileUtils::PatchOrder userOrder;
-	ProfileUtils::readOverrideOrders(PathCombine(m_instance->instanceRoot(), "order.json"),
-									 userOrder);
+	ProfileUtils::readOverrideOrders(PathCombine(m_instance->instanceRoot(), "order.json"), userOrder);
 	QDir patches(PathCombine(m_instance->instanceRoot(), "patches"));
 
-	// first, load things by sort order.
+	// for each order item:
+	// first, queue up things by sort order.
 	for (auto id : userOrder)
 	{
-		// ignore builtins
-		if (id == "net.minecraft")
+		// ignore hardcoded
+		if(loadOrder.seen(id))
 			continue;
-		if (id == "org.lwjgl")
-			continue;
-		if (id == "net.minecraftforge")
-			continue;
-		if (id == "com.mumfrey.liteloader")
-			continue;
+
 		// parse the file
 		QString filename = patches.absoluteFilePath(id + ".json");
 		QFileInfo finfo(filename);
-		if (!finfo.exists())
+		// if the override file doesn't exist
+		if (finfo.exists())
 		{
+			// it's override
+			loadOrder.insert({id, "override"}, "override file by user order");
+		}
+		else
+		{
+			// not override... do we know the version?
+			if(id == "net.minecraftforge")
+			{
+				if(!m_instance->forgeVersion().isEmpty())
+				{
+					loadOrder.insert({id, m_instance->forgeVersion()}, "override forge by user order");
+					continue;
+				}
+			}
+			else if(id == "com.mumfrey.liteloader")
+			{
+				if(!m_instance->liteloaderVersion().isEmpty())
+				{
+					loadOrder.insert({id, m_instance->liteloaderVersion()}, "override liteloader by user order");
+					continue;
+				}
+			}
 			qDebug() << "Patch file " << filename << " was deleted by external means...";
-			continue;
 		}
-		qDebug() << "Reading" << filename << "by user order";
-		auto file = ProfileUtils::parseJsonFile(finfo, false);
-		// sanity check. prevent tampering with files.
-		if (file->fileId != id)
-		{
-			throw VersionBuildError(
-				QObject::tr("load id %1 does not match internal id %2").arg(id, file->fileId));
-		}
-		profile->appendPatch(file);
 	}
-	// now load the rest by internal preference.
-	QMap<int, QPair<QString, PackagePtr>> files;
-	for (auto info : patches.entryInfoList(QStringList() << "*.json", QDir::Files))
+
+	// then load the rest of the 'loose' patches
+	QMap<int, QStringList> files;
+	QStringList unorderedFiles;
+	for (auto info : patches.entryInfoList(QStringList() << "*.json", QDir::Files, QDir::Time))
 	{
 		// parse the file
 		qDebug() << "Reading" << info.fileName();
 		auto file = ProfileUtils::parseJsonFile(info, true);
 		// ignore builtins
-		if (file->fileId == "net.minecraft")
-			continue;
-		if (file->fileId == "org.lwjgl")
-			continue;
-		if (file->fileId == "net.minecraftforge")
-			continue;
-		if (file->fileId == "com.mumfrey.liteloader")
+		if(loadOrder.seen(info.completeBaseName()))
 			continue;
 		// do not load what we already loaded in the first pass
 		if (userOrder.contains(file->fileId))
 			continue;
 		int fileOrder = file->getOrder();
-		if (files.contains(fileOrder))
+		if(fileOrder < 0)
 		{
-			// FIXME: do not throw?
-			throw VersionBuildError(QObject::tr("%1 has the same order as %2")
-										.arg(file->fileId, files[fileOrder].second->fileId));
+			unorderedFiles.push_back(info.completeBaseName());
 		}
-		files.insert(fileOrder, qMakePair(info.fileName(), file));
+		else if (files.contains(fileOrder))
+		{
+			files[fileOrder].push_back(info.completeBaseName());
+		}
+		else
+		{
+			files.insert(fileOrder, {info.completeBaseName()});
+		}
 	}
 	for (auto order : files.keys())
 	{
-		auto &filePair = files[order];
-		profile->appendPatch(filePair.second);
+		auto &filesList = files[order];
+		for(auto item: filesList)
+		{
+			loadOrder.insert({item, "override"}, "override by internal order number");
+		}
 	}
-}
+	for (auto item: unorderedFiles)
+	{
+		loadOrder.insert({item, "override"}, "override by file timestamp");
+	}
 
-void OneSixProfileStrategy::load()
-{
+	// actually load the files.
 	profile->clearPatches();
+	for(auto item: loadOrder.loadOrder)
+	{
+		// if it's a loose override file:
+		if(item.version == "override")
+		{
+			auto mcJson = PathCombine(m_instance->instanceRoot(), "patches", QString("%1.json").arg(item.uid));
+			auto file = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
+			file->fileId = item.uid;
+			file->name = item.uid; // FIXME: use name.
+			if (file->version.isEmpty())
+			{
+				file->version = QObject::tr("Custom");
+			}
+			profile->appendPatch(file);
+		}
+		// if it's a wonko file:
+		else
+		{
 
-	upgradeDeprecatedFiles();
-	loadDefaultBuiltinPatches();
-	loadUserPatches();
-
+		}
+	}
 	profile->resources.finalize();
 }
 

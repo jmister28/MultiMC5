@@ -14,11 +14,13 @@ public:
 	virtual bool removePatch(PackagePtr patch) override;
 
 protected:
+	/*
 	void loadDefaultBuiltinPatches();
 	void loadUserPatches();
-	void upgradeDeprecatedFiles();
-	void loadBuiltinPatch(QString uid, QString name, QString version);
+	*/
+	void loadBuiltinPatch(QString uid, QString version);
 
+	void upgradeDeprecatedFiles();
 protected:
 	OneSixInstance *m_instance;
 };

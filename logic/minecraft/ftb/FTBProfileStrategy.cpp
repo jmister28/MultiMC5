@@ -16,8 +16,8 @@ FTBProfileStrategy::FTBProfileStrategy(FTBInstance* instance) : OneSixProfileStr
 void FTBProfileStrategy::load()
 {
 	profile->clearPatches();
-
-	loadDefaultBuiltinPatches();
+	loadBuiltinPatch("net.minecraft", m_instance->minecraftVersion());
+	loadBuiltinPatch("org.lwjgl", m_instance->lwjglVersion());
 
 	// FTB hack -> fake upgrade of libs.
 	if(m_instance->minecraftVersion() == "1.7.10")
@@ -106,7 +106,6 @@ void FTBProfileStrategy::load()
 		profile->appendPatch(ftbPackJson);
 	}
 
-	loadUserPatches();
 	profile->resources.finalize();
 }
 
