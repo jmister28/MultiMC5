@@ -92,37 +92,28 @@ void OneSixProfileStrategy::loadBuiltinPatch(QString uid, QString version)
 	profile->appendPatch(minecraftPatch);
 }
 
+void OneSixProfileStrategy::loadLoosePatch(QString uid, QString name)
+{
+	auto mcJson = PathCombine(m_instance->instanceRoot(), "patches", QString("%1.json").arg(uid));
+	auto file = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
+	file->fileId = uid;
+	if(file->name.isEmpty())
+	{
+		file->name = name;
+	}
+	if (file->version.isEmpty())
+	{
+		file->version = QObject::tr("Custom");
+	}
+	profile->appendPatch(file);
+}
+
 void OneSixProfileStrategy::load()
 {
 	// upgrade old patch files, if any
 	upgradeDeprecatedFiles();
 
-	struct PatchItem
-	{
-		QString uid;
-		QString version;
-	};
-	struct
-	{
-		bool insert(PatchItem item, const char * reason = 0)
-		{
-			if(seen(item.uid))
-			{
-				qCritical() << "Already seen" << item.uid << "version" << item.version << (reason ?(QString("reason %1").arg(reason)): "for no reason");
-				return false;
-			}
-			qDebug() << "Adding" << item.uid << "version" << item.version << (reason ?(QString("reason %1").arg(reason)): "for no reason");
-			loadOrder.append(item);
-			index[item.uid] = &loadOrder.last();
-			return false;
-		}
-		bool seen(QString uid)
-		{
-			return index.contains(uid);
-		}
-		QList <PatchItem> loadOrder;
-		QMap <QString, PatchItem *> index;
-	} loadOrder;
+	LoadOrder loadOrder;
 	loadOrder.insert({"net.minecraft", m_instance->minecraftVersion()}, "hardcoded");
 	loadOrder.insert({"org.lwjgl", m_instance->lwjglVersion()}, "hardcoded");
 
@@ -155,7 +146,7 @@ void OneSixProfileStrategy::load()
 			{
 				if(!m_instance->forgeVersion().isEmpty())
 				{
-					loadOrder.insert({id, m_instance->forgeVersion()}, "override forge by user order");
+					loadOrder.insert({id, m_instance->forgeVersion()}, "forge by user order");
 					continue;
 				}
 			}
@@ -163,7 +154,7 @@ void OneSixProfileStrategy::load()
 			{
 				if(!m_instance->liteloaderVersion().isEmpty())
 				{
-					loadOrder.insert({id, m_instance->liteloaderVersion()}, "override liteloader by user order");
+					loadOrder.insert({id, m_instance->liteloaderVersion()}, "liteloader by user order");
 					continue;
 				}
 			}
@@ -219,20 +210,12 @@ void OneSixProfileStrategy::load()
 		// if it's a loose override file:
 		if(item.version == "override")
 		{
-			auto mcJson = PathCombine(m_instance->instanceRoot(), "patches", QString("%1.json").arg(item.uid));
-			auto file = ProfileUtils::parseJsonFile(QFileInfo(mcJson), false);
-			file->fileId = item.uid;
-			file->name = item.uid; // FIXME: use name.
-			if (file->version.isEmpty())
-			{
-				file->version = QObject::tr("Custom");
-			}
-			profile->appendPatch(file);
+			loadLoosePatch(item.uid, item.uid);
 		}
 		// if it's a wonko file:
 		else
 		{
-
+			loadBuiltinPatch(item.uid, item.version);
 		}
 	}
 	profile->resources.finalize();
